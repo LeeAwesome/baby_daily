@@ -4,26 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-    <title>婴儿护理数据看板</title>
-    <script id="chartjs-bootstrap">
-    (function () {
-      try {
-        var code = localStorage.getItem('chartjs_3_9_1');
-        if (code) {
-          var s = document.createElement('script');
-          s.text = code;
-          document.head.appendChild(s);
-          window.__CHARTJS_READY__ = true;
-        } else {
-          window.__CHARTJS_READY__ = false;
-          window.__NEED_CHARTJS__ = true;
-        }
-      } catch (e) {
-        window.__CHARTJS_READY__ = false;
-        window.__NEED_CHARTJS__ = true;
-      }
-    })();
-    </script>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>👶 婴儿护理数据看板</title>
     <style>
         * {
             margin: 0;
@@ -66,18 +49,80 @@
 
         .file-label {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             background: #667eea;
             color: #fff;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px
+            font-size: 16px;
+            font-weight: 600;
+            transition: all .3s
+        }
+
+        .file-label:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .2)
         }
 
         .status {
             margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+            font-weight: 500
+        }
+
+        .chart-lib-notice {
+            background: rgba(255, 235, 59, .2);
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 4px;
             font-size: 12px;
-            color: #666
+            color: #333
+        }
+
+        .chart-lib-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+            flex-wrap: wrap
+        }
+
+        .lib-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .3s;
+            font-weight: 600
+        }
+
+        .lib-btn.primary {
+            background: #667eea;
+            color: #fff
+        }
+
+        .lib-btn.primary:hover {
+            background: #5568d3
+        }
+
+        .lib-btn.secondary {
+            background: #e0e0e0;
+            color: #333
+        }
+
+        .lib-btn.secondary:hover {
+            background: #d0d0d0
+        }
+
+        .lib-status {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            text-align: center
         }
 
         .today-summary {
@@ -106,7 +151,8 @@
         .today-card {
             background: rgba(255, 255, 255, .15);
             padding: 10px;
-            border-radius: 8px
+            border-radius: 8px;
+            backdrop-filter: blur(10px)
         }
 
         .today-card h3 {
@@ -176,7 +222,29 @@
         }
 
         canvas {
-            max-height: 250px
+            max-height: 250px;
+            touch-action: pan-y
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 12px
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px
         }
     </style>
 </head>
@@ -187,11 +255,13 @@
         <div class="file-input-container"><label for="csvFile" class="file-label">📁 选择CSV文件</label><input type="file"
                 id="csvFile" accept=".csv">
             <div class="status" id="status">等待选择文件...</div>
-        </div>
-        <div class="file-input-container" id="chartjsPicker" style="display:none; margin-top:10px;">
-          <label for="chartJsFile" class="file-label">📦 选择Chart.js（首次离线使用）</label>
-          <input type="file" id="chartJsFile" accept=".js">
-          <div class="status" id="chartStatus">Chart.js 未就绪（仅需选择一次，随后离线可用）</div>
+            <div id="chartLibNotice" class="chart-lib-notice" style="display:none">⚠️ Chart.js 未加载：请先点击下方按钮加载图表库（首次离线使用）
+                <div class="chart-lib-buttons"><button class="lib-btn primary" id="loadChartBtn">📦
+                        选择Chart.js（首次离线使用）</button><button class="lib-btn secondary" id="loadOnlineBtn">🌐
+                        从CDN加载（需联网）</button></div>
+                <div class="lib-status" id="libStatus">Chart.js 未就绪（仅需选择一次，随后离线可用）</div><input type="file"
+                    id="chartjsFile" accept=".js" style="display:none">
+            </div>
         </div>
         <div id="dataContainer" style="display:none">
             <div class="today-summary">
@@ -249,19 +319,19 @@
             </div>
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h3>总喂奶次数</h3>
-                    <div class="value" id="totalFeeding">-</div>
-                    <div class="unit">次</div>
+                    <h3>日均奶粉</h3>
+                    <div class="value" id="avgFormula">-</div>
+                    <div class="unit">ml</div>
+                </div>
+                <div class="stat-card">
+                    <h3>日均母乳</h3>
+                    <div class="value" id="avgBreast">-</div>
+                    <div class="unit">分钟</div>
                 </div>
                 <div class="stat-card">
                     <h3>日均睡眠</h3>
                     <div class="value" id="avgDailySleep">-</div>
                     <div class="unit">小时</div>
-                </div>
-                <div class="stat-card">
-                    <h3>日均奶粉</h3>
-                    <div class="value" id="avgFormula">-</div>
-                    <div class="unit">ml</div>
                 </div>
                 <div class="stat-card">
                     <h3>当前体重</h3>
@@ -270,13 +340,7 @@
                 </div>
             </div>
             <div class="chart-container">
-                <div class="chart-title">📊 每日喂奶次数</div><canvas id="feedingChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">🌓 昼夜喂奶分布</div><canvas id="dayNightChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <div class="chart-title">😴 睡眠时长(白天vs夜间)</div><canvas id="sleepChart"></canvas>
+                <div class="chart-title">📊 每日喂奶统计</div><canvas id="feedingChart"></canvas>
             </div>
             <div class="chart-container">
                 <div class="chart-title">📈 奶粉用量趋势</div><canvas id="formulaChart"></canvas>
@@ -284,72 +348,26 @@
             <div class="chart-container">
                 <div class="chart-title">🍼 母乳时长趋势</div><canvas id="breastChart"></canvas>
             </div>
+            <div class="chart-container">
+                <div class="chart-title">⚖️ 体重变化趋势</div><canvas id="weightChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">💩 大便次数记录</div><canvas id="poopChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">😴 睡眠时长 (白天 vs 夜间)</div><canvas id="sleepChart"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:rgba(255,206,86,0.8)"></div><span>白天</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background:rgba(153,102,255,0.8)"></div><span>夜间</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <script>
-    (function(){
-      function ensureChartUI(){
-        var pick = document.getElementById('chartjsPicker');
-        if (!pick) return;
-        if (window.__CHARTJS_READY__) {
-          pick.style.display = 'none';
-          var st = document.getElementById('chartStatus');
-          if (st) st.textContent = 'Chart.js 已就绪（来自本地缓存）';
-        } else {
-          pick.style.display = 'block';
-        }
-      }
-      document.addEventListener('DOMContentLoaded', ensureChartUI);
-      window.addEventListener('load', ensureChartUI);
-
-      window.__injectChartFromLocalFile = function(file){
-        var reader = new FileReader();
-        reader.onload = function(ev){
-          try{
-            var code = ev.target.result || '';
-            // 简单校验，避免误选文件
-            if (code.indexOf('Chart=') === -1 && code.indexOf('class Chart') === -1 && code.indexOf('Chart.version') === -1) {
-              var st1 = document.getElementById('chartStatus');
-              if (st1) st1.textContent = '选择的文件不像是 Chart.js，仍已尝试加载…';
-            }
-            localStorage.setItem('chartjs_3_9_1', code);
-            var s = document.createElement('script');
-            s.text = code;
-            document.head.appendChild(s);
-            window.__CHARTJS_READY__ = true;
-            var st = document.getElementById('chartStatus');
-            if (st) st.textContent = 'Chart.js 已加载并缓存（离线可用）';
-            var pick = document.getElementById('chartjsPicker');
-            if (pick) pick.style.display = 'none';
-          }catch(err){
-            var st2 = document.getElementById('chartStatus');
-            if (st2) st2.textContent = '加载失败：' + err.message;
-          }
-        };
-        reader.onerror = function(){
-          var st3 = document.getElementById('chartStatus');
-          if (st3) st3.textContent = '读取失败';
-        };
-        reader.readAsText(file, 'UTF-8');
-      };
-
-      document.addEventListener('change', function(e){
-        if (e.target && e.target.id === 'chartJsFile' && e.target.files && e.target.files[0]) {
-          __injectChartFromLocalFile(e.target.files[0]);
-        }
-      });
-    })();
-    let charts = {}; function parseCSV(text) { const lines = text.trim().split('\n'); if (lines.length < 2) return []; const firstLine = lines[0]; const delimiter = firstLine.includes(',') && !firstLine.includes('\t') ? ',' : '\t'; const headers = firstLine.split(delimiter).map(h => h.trim()); const data = []; for (let i = 1; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const cols = line.split(delimiter); const row = {}; let hasData = false; headers.forEach((header, idx) => { row[header] = (cols[idx] || '').trim(); if (row[header] && header === 'timestamp') hasData = true }); if (hasData) data.push(row) } return data } function getHour(timestamp) { return parseInt(timestamp.split(' ')[1].split(':')[0]) } function isDay(hour) { return hour >= 6 && hour < 20 } function analyzeData(csvData) { const dailyStats = {}; let latestWeight = null; let todayStats = null; const today = new Date().toISOString().split('T')[0]; csvData.forEach(row => { const timestamp = (row.timestamp || '').trim().replace(/\s+/g, ' '); if (!timestamp || !/\d{4}-\d{2}-\d{2}/.test(timestamp)) return; const date = timestamp.split(' ')[0]; const shortDate = date.substring(5); const hour = getHour(timestamp); const isDayTime = isDay(hour); if (!dailyStats[shortDate]) { dailyStats[shortDate] = { 母乳: 0, 母乳时长: 0, 奶粉: 0, 奶粉量: 0, 睡眠: [], 辅食: 0, 大便: 0, 白天喂奶: 0, 夜间喂奶: 0, 白天睡眠: 0, 夜间睡眠: 0, 体重: null } } const s = dailyStats[shortDate]; const type = (row.event_type || '').trim(); const sub = (row.subtype || '').trim(); const val = parseFloat(row.value || '0') || 0; const pair = (row.pair_key || '').trim(); if (type === '喂奶') { if (sub === '母乳') { s.母乳++; if (val > 0) s.母乳时长 += val; if (isDayTime) s.白天喂奶++; else s.夜间喂奶++ } else if (sub === '奶粉') { s.奶粉++; if (val > 0) s.奶粉量 += val; if (isDayTime) s.白天喂奶++; else s.夜间喂奶++ } } else if (type === '睡觉' && sub === '结束' && pair) { try { const start = new Date(pair.replace(' ', 'T')); const end = new Date(timestamp.replace(' ', 'T')); if (!isNaN(start.getTime()) && !isNaN(end.getTime())) { const h = (end - start) / 3600000; if (h > 0 && h < 24) { s.睡眠.push(h); const sh = getHour(pair); if (isDay(sh)) s.白天睡眠 += h; else s.夜间睡眠 += h } } } catch (e) { } } else if (type === '体重' && val > 0) { s.体重 = val; latestWeight = val } else if (type === '辅食') s.辅食++; else if (type === '换尿布' && sub === '大便') s.大便++; if (date === today) todayStats = s }); const dates = Object.keys(dailyStats).sort(); const result = {}; dates.forEach(d => { const s = dailyStats[d]; const total = s.睡眠.reduce((a, b) => a + b, 0); result[d] = { 母乳: s.母乳, 母乳时长: s.母乳时长, 奶粉: s.奶粉, 奶粉量: Math.round(s.奶粉量), 睡眠: Math.round(total * 10) / 10, 睡眠次数: s.睡眠.length, 最长睡眠: s.睡眠.length > 0 ? Math.max(...s.睡眠).toFixed(1) : 0, 辅食: s.辅食, 大便: s.大便, 白天喂奶: s.白天喂奶, 夜间喂奶: s.夜间喂奶, 白天睡眠: Math.round(s.白天睡眠 * 10) / 10, 夜间睡眠: Math.round(s.夜间睡眠 * 10) / 10, 体重: s.体重 } }); return { data: result, dates: dates, weight: latestWeight, todayData: todayStats ? { ...todayStats, 睡眠总: todayStats.睡眠.reduce((a, b) => a + b, 0), 最长: todayStats.睡眠.length > 0 ? Math.max(...todayStats.睡眠) : 0 } : null } } function renderToday(td) { if (!td) { document.querySelector('.today-summary').style.display = 'none'; return } const now = new Date(); document.getElementById('todayDate').textContent = `(${now.getMonth() + 1}/${now.getDate()})`; document.getElementById('todayFeedingCount').textContent = td.母乳 + td.奶粉; document.getElementById('todayFormula').textContent = Math.round(td.奶粉量); document.getElementById('todayBreast').textContent = Math.round(td.母乳时长); document.getElementById('todaySleepCount').textContent = td.睡眠.length; document.getElementById('todaySleepTotal').textContent = td.睡眠总.toFixed(1); document.getElementById('todaySleepMax').textContent = td.最长.toFixed(1); document.getElementById('todayDayFeeding').textContent = td.白天喂奶; document.getElementById('todayDaySleep').textContent = td.白天睡眠.toFixed(1); document.getElementById('todayNightFeeding').textContent = td.夜间喂奶; document.getElementById('todayNightSleep').textContent = td.夜间睡眠.toFixed(1); let hasOther = false; if (td.体重) { document.getElementById('todayWeightCard').style.display = 'block'; document.getElementById('todayWeight').textContent = td.体重; hasOther = true } if (td.辅食 > 0) { document.getElementById('todayFoodCard').style.display = 'block'; document.getElementById('todayFood').textContent = td.辅食; hasOther = true } if (td.大便 > 0) { document.getElementById('todayPoopCard').style.display = 'block'; document.getElementById('todayPoop').textContent = td.大便; hasOther = true } if (hasOther) document.getElementById('todayOther').style.display = 'grid' }
-    function renderCharts(analyzed) {
-      if (typeof Chart === 'undefined') {
-        const st = document.getElementById('status');
-        if (st) st.textContent = '⚠️ Chart.js 未加载：请先点击“选择Chart.js（首次离线使用）”导入 chart.min.js。';
-        return;
-      }
-      const { data, dates, weight, todayData } = analyzed; if (dates.length === 0) { document.getElementById('status').textContent = '❌ 没有数据'; return } document.getElementById('dataContainer').style.display = 'block'; renderToday(todayData); const totalB = dates.reduce((s, d) => s + data[d].母乳, 0); const totalF = dates.reduce((s, d) => s + data[d].奶粉, 0); const totalS = dates.reduce((s, d) => s + data[d].睡眠, 0); const totalFA = dates.reduce((s, d) => s + data[d].奶粉量, 0); document.getElementById('totalFeeding').textContent = totalB + totalF; document.getElementById('avgDailySleep').textContent = (totalS / dates.length).toFixed(1); document.getElementById('avgFormula').textContent = Math.round(totalFA / dates.length); document.getElementById('currentWeight').textContent = weight || '-'; Chart.defaults.font.size = 12; if (charts.f) charts.f.destroy(); charts.f = new Chart(document.getElementById('feedingChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '母乳(次)', data: dates.map(d => data[d].母乳), backgroundColor: 'rgba(255,159,64,0.8)' }, { label: '奶粉(次)', data: dates.map(d => data[d].奶粉), backgroundColor: 'rgba(54,162,235,0.8)' }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); if (charts.dn) charts.dn.destroy(); charts.dn = new Chart(document.getElementById('dayNightChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '白天', data: dates.map(d => data[d].白天喂奶), backgroundColor: 'rgba(255,206,86,0.8)' }, { label: '夜间', data: dates.map(d => data[d].夜间喂奶), backgroundColor: 'rgba(75,192,192,0.8)' }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); if (charts.s) charts.s.destroy(); charts.s = new Chart(document.getElementById('sleepChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '白天(h)', data: dates.map(d => data[d].白天睡眠), backgroundColor: 'rgba(255,206,86,0.8)' }, { label: '夜间(h)', data: dates.map(d => data[d].夜间睡眠), backgroundColor: 'rgba(153,102,255,0.8)' }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0, stacked: !0 }, x: { stacked: !0 } } } }); if (charts.fm) charts.fm.destroy(); charts.fm = new Chart(document.getElementById('formulaChart'), { type: 'line', data: { labels: dates, datasets: [{ label: '奶粉(ml)', data: dates.map(d => data[d].奶粉量), borderColor: 'rgba(54,162,235,1)', backgroundColor: 'rgba(54,162,235,0.2)', fill: !0, tension: .4 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); if (charts.b) charts.b.destroy(); charts.b = new Chart(document.getElementById('breastChart'), { type: 'line', data: { labels: dates, datasets: [{ label: '母乳(分钟)', data: dates.map(d => data[d].母乳时长), borderColor: 'rgba(255,159,64,1)', backgroundColor: 'rgba(255,159,64,0.2)', fill: !0, tension: .4 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); document.getElementById('status').textContent = '✅ 加载成功'
-    }
-    document.getElementById('csvFile').addEventListener('change', function (e) { const file = e.target.files[0]; if (!file) return; document.getElementById('status').textContent = '读取中...'; const reader = new FileReader(); reader.onload = function (ev) { try { const csv = parseCSV(ev.target.result); if (csv.length === 0) { document.getElementById('status').textContent = '❌ 无数据'; return } const analyzed = analyzeData(csv); renderCharts(analyzed) } catch (err) { document.getElementById('status').textContent = '❌ 错误:' + err.message } }; reader.onerror = function () { document.getElementById('status').textContent = '❌ 读取失败' }; reader.readAsText(file, 'UTF-8') })
-    </script>
+    <script>let charts = {}; let chartData = null; let hasChartJS = false; function checkChartJS() { if (typeof Chart !== 'undefined') { hasChartJS = true; document.getElementById('chartLibNotice').style.display = 'none'; document.getElementById('libStatus').textContent = '✅ Chart.js 已加载'; return true } return false } function tryLoadChartJS() { const savedChart = localStorage.getItem('chartjs_lib'); if (savedChart) { try { eval(savedChart); if (checkChartJS()) { console.log('从缓存加载Chart.js成功'); return true } } catch (e) { console.error('缓存的Chart.js加载失败', e); localStorage.removeItem('chartjs_lib') } } const script = document.createElement('script'); script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js'; script.onload = function () { checkChartJS(); if (chartData) { renderCharts(chartData) } }; script.onerror = function () { console.log('CDN加载失败'); document.getElementById('chartLibNotice').style.display = 'block' }; document.head.appendChild(script) } tryLoadChartJS(); document.getElementById('loadOnlineBtn').addEventListener('click', function () { document.getElementById('libStatus').textContent = '⏳ 正在从CDN加载...'; const script = document.createElement('script'); script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js'; script.onload = function () { if (checkChartJS()) { fetch('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js').then(r => r.text()).then(code => { localStorage.setItem('chartjs_lib', code); document.getElementById('libStatus').textContent = '✅ Chart.js 已加载并缓存（现在可离线使用）'; if (chartData) renderCharts(chartData) }).catch(e => { document.getElementById('libStatus').textContent = '✅ Chart.js 已加载（缓存失败，下次需联网）'; if (chartData) renderCharts(chartData) }) } }; script.onerror = function () { document.getElementById('libStatus').textContent = '❌ CDN加载失败，请检查网络' }; document.head.appendChild(script) }); document.getElementById('loadChartBtn').addEventListener('click', function () { document.getElementById('chartjsFile').click() }); document.getElementById('chartjsFile').addEventListener('change', function (e) { const file = e.target.files[0]; if (!file) return; document.getElementById('libStatus').textContent = '⏳ 正在加载Chart.js...'; const reader = new FileReader(); reader.onload = function (ev) { try { eval(ev.target.result); if (checkChartJS()) { localStorage.setItem('chartjs_lib', ev.target.result); document.getElementById('libStatus').textContent = '✅ Chart.js 已加载并缓存（现在可离线使用）'; if (chartData) renderCharts(chartData) } else { document.getElementById('libStatus').textContent = '❌ 文件不是有效的Chart.js' } } catch (err) { document.getElementById('libStatus').textContent = '❌ 加载失败：' + err.message } }; reader.readAsText(file) }); function parseCSV(text) { const lines = text.trim().split('\n'); if (lines.length < 2) return []; const firstLine = lines[0]; const delimiter = firstLine.includes(',') && !firstLine.includes('\t') ? ',' : '\t'; const headers = firstLine.split(delimiter).map(h => h.trim()); const data = []; for (let i = 1; i < lines.length; i++) { const line = lines[i].trim(); if (!line) continue; const cols = line.split(delimiter); const row = {}; let hasData = false; headers.forEach((header, idx) => { row[header] = (cols[idx] || '').trim(); if (row[header] && header === 'timestamp') hasData = true }); if (hasData) data.push(row) } return data } function getHour(timestamp) { return parseInt(timestamp.split(' ')[1].split(':')[0]) } function isDay(hour) { return hour >= 6 && hour < 20 } function analyzeData(csvData) { const dailyStats = {}; let latestWeight = null; let todayStats = null; const today = new Date().toISOString().split('T')[0]; csvData.forEach(row => { const timestamp = (row.timestamp || '').trim().replace(/\s+/g, ' '); if (!timestamp || !/\d{4}-\d{2}-\d{2}/.test(timestamp)) return; const date = timestamp.split(' ')[0]; const shortDate = date.substring(5); const hour = getHour(timestamp); const isDayTime = isDay(hour); if (!dailyStats[shortDate]) { dailyStats[shortDate] = { 母乳: 0, 母乳时长: 0, 奶粉: 0, 奶粉量: 0, 睡眠: [], 辅食: 0, 大便: 0, 白天喂奶: 0, 夜间喂奶: 0, 白天睡眠: 0, 夜间睡眠: 0, 体重: null } } const s = dailyStats[shortDate]; const type = (row.event_type || '').trim(); const sub = (row.subtype || '').trim(); const val = parseFloat(row.value || '0') || 0; const pair = (row.pair_key || '').trim(); if (type === '喂奶') { if (sub === '母乳') { s.母乳++; if (val > 0) s.母乳时长 += val; if (isDayTime) s.白天喂奶++; else s.夜间喂奶++ } else if (sub === '奶粉') { s.奶粉++; if (val > 0) s.奶粉量 += val; if (isDayTime) s.白天喂奶++; else s.夜间喂奶++ } } else if (type === '睡觉' && sub === '结束' && pair) { try { const start = new Date(pair.replace(' ', 'T')); const end = new Date(timestamp.replace(' ', 'T')); if (!isNaN(start.getTime()) && !isNaN(end.getTime())) { const h = (end - start) / 3600000; if (h > 0 && h < 24) { s.睡眠.push(h); const sh = getHour(pair); if (isDay(sh)) s.白天睡眠 += h; else s.夜间睡眠 += h } } } catch (e) { } } else if (type === '体重' && val > 0) { s.体重 = val; latestWeight = val } else if (type === '辅食') s.辅食++; else if (type === '换尿布' && sub === '大便') s.大便++; if (date === today) todayStats = s }); const dates = Object.keys(dailyStats).sort(); const result = {}; dates.forEach(d => { const s = dailyStats[d]; const total = s.睡眠.reduce((a, b) => a + b, 0); result[d] = { 母乳: s.母乳, 母乳时长: s.母乳时长, 奶粉: s.奶粉, 奶粉量: Math.round(s.奶粉量), 睡眠: Math.round(total * 10) / 10, 睡眠次数: s.睡眠.length, 最长睡眠: s.睡眠.length > 0 ? Math.max(...s.睡眠).toFixed(1) : 0, 辅食: s.辅食, 大便: s.大便, 白天喂奶: s.白天喂奶, 夜间喂奶: s.夜间喂奶, 白天睡眠: Math.round(s.白天睡眠 * 10) / 10, 夜间睡眠: Math.round(s.夜间睡眠 * 10) / 10, 体重: s.体重 } }); return { data: result, dates: dates, weight: latestWeight, todayData: todayStats ? { ...todayStats, 睡眠总: todayStats.睡眠.reduce((a, b) => a + b, 0), 最长: todayStats.睡眠.length > 0 ? Math.max(...todayStats.睡眠) : 0 } : null } } function renderToday(td) { if (!td) { document.querySelector('.today-summary').style.display = 'none'; return } const now = new Date(); document.getElementById('todayDate').textContent = `(${now.getMonth() + 1}/${now.getDate()})`; document.getElementById('todayFeedingCount').textContent = td.母乳 + td.奶粉; document.getElementById('todayFormula').textContent = Math.round(td.奶粉量); document.getElementById('todayBreast').textContent = Math.round(td.母乳时长); document.getElementById('todaySleepCount').textContent = td.睡眠.length; document.getElementById('todaySleepTotal').textContent = td.睡眠总.toFixed(1); document.getElementById('todaySleepMax').textContent = td.最长.toFixed(1); document.getElementById('todayDayFeeding').textContent = td.白天喂奶; document.getElementById('todayDaySleep').textContent = td.白天睡眠.toFixed(1); document.getElementById('todayNightFeeding').textContent = td.夜间喂奶; document.getElementById('todayNightSleep').textContent = td.夜间睡眠.toFixed(1); let hasOther = false; if (td.体重) { document.getElementById('todayWeightCard').style.display = 'block'; document.getElementById('todayWeight').textContent = td.体重; hasOther = true } if (td.辅食 > 0) { document.getElementById('todayFoodCard').style.display = 'block'; document.getElementById('todayFood').textContent = td.辅食; hasOther = true } if (td.大便 > 0) { document.getElementById('todayPoopCard').style.display = 'block'; document.getElementById('todayPoop').textContent = td.大便; hasOther = true } if (hasOther) document.getElementById('todayOther').style.display = 'grid' } function renderCharts(analyzed) { if (!hasChartJS) { document.getElementById('status').textContent = '⚠️ 请先加载Chart.js图表库'; document.getElementById('chartLibNotice').style.display = 'block'; chartData = analyzed; return } const { data, dates, weight, todayData } = analyzed; if (dates.length === 0) { document.getElementById('status').textContent = '❌ 没有数据'; return } document.getElementById('dataContainer').style.display = 'block'; renderToday(todayData); const totalS = dates.reduce((s, d) => s + data[d].睡眠, 0); const totalFA = dates.reduce((s, d) => s + data[d].奶粉量, 0); const totalBT = dates.reduce((s, d) => s + data[d].母乳时长, 0); document.getElementById('avgDailySleep').textContent = (totalS / dates.length).toFixed(1); document.getElementById('avgFormula').textContent = Math.round(totalFA / dates.length); document.getElementById('avgBreast').textContent = Math.round(totalBT / dates.length); document.getElementById('currentWeight').textContent = weight || '-'; Chart.defaults.font.size = 12; const calcFeeding = (d, type) => { const total = data[d].母乳 + data[d].奶粉 || 1; if (type === 'dayMilk') return (data[d].母乳 / total) * data[d].白天喂奶; if (type === 'dayFormula') return (data[d].奶粉 / total) * data[d].白天喂奶; if (type === 'nightMilk') return (data[d].母乳 / total) * data[d].夜间喂奶; if (type === 'nightFormula') return (data[d].奶粉 / total) * data[d].夜间喂奶 }; if (charts.f) charts.f.destroy(); charts.f = new Chart(document.getElementById('feedingChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '母乳-白天', data: dates.map(d => calcFeeding(d, 'dayMilk')), backgroundColor: 'rgba(255,200,100,0.8)', stack: 'day' }, { label: '奶粉-白天', data: dates.map(d => calcFeeding(d, 'dayFormula')), backgroundColor: 'rgba(100,180,255,0.8)', stack: 'day' }, { label: '母乳-夜间', data: dates.map(d => calcFeeding(d, 'nightMilk')), backgroundColor: 'rgba(255,159,64,0.6)', stack: 'night' }, { label: '奶粉-夜间', data: dates.map(d => calcFeeding(d, 'nightFormula')), backgroundColor: 'rgba(54,162,235,0.6)', stack: 'night' }] }, options: { responsive: !0, maintainAspectRatio: !0, scales: { y: { beginAtZero: !0 }, x: { stacked: !0 } } } }); if (charts.fm) charts.fm.destroy(); charts.fm = new Chart(document.getElementById('formulaChart'), { type: 'line', data: { labels: dates, datasets: [{ label: '奶粉(ml)', data: dates.map(d => data[d].奶粉量), borderColor: 'rgba(54,162,235,1)', backgroundColor: 'rgba(54,162,235,0.2)', fill: !0, tension: .4 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); if (charts.b) charts.b.destroy(); charts.b = new Chart(document.getElementById('breastChart'), { type: 'line', data: { labels: dates, datasets: [{ label: '母乳(分钟)', data: dates.map(d => data[d].母乳时长), borderColor: 'rgba(255,159,64,1)', backgroundColor: 'rgba(255,159,64,0.2)', fill: !0, tension: .4 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0 } } } }); if (charts.w) charts.w.destroy(); charts.w = new Chart(document.getElementById('weightChart'), { type: 'line', data: { labels: dates, datasets: [{ label: '体重(kg)', data: dates.map(d => data[d].体重), borderColor: 'rgba(75,192,192,1)', backgroundColor: 'rgba(75,192,192,0.2)', fill: !0, tension: .4, spanGaps: !0 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !1 } } } }); if (charts.p) charts.p.destroy(); charts.p = new Chart(document.getElementById('poopChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '大便(次)', data: dates.map(d => data[d].大便), backgroundColor: 'rgba(139,69,19,0.6)', borderColor: 'rgba(139,69,19,1)', borderWidth: 1 }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0, ticks: { stepSize: 1 } } } } }); if (charts.s) charts.s.destroy(); charts.s = new Chart(document.getElementById('sleepChart'), { type: 'bar', data: { labels: dates, datasets: [{ label: '白天(h)', data: dates.map(d => data[d].白天睡眠), backgroundColor: 'rgba(255,206,86,0.8)' }, { label: '夜间(h)', data: dates.map(d => data[d].夜间睡眠), backgroundColor: 'rgba(153,102,255,0.8)' }] }, options: { responsive: !0, scales: { y: { beginAtZero: !0, stacked: !0 }, x: { stacked: !0 } } } }); document.getElementById('status').textContent = '✅ 加载成功' } document.getElementById('csvFile').addEventListener('change', function (e) { const file = e.target.files[0]; if (!file) return; document.getElementById('status').textContent = '读取中...'; const reader = new FileReader(); reader.onload = function (ev) { try { const csv = parseCSV(ev.target.result); if (csv.length === 0) { document.getElementById('status').textContent = '❌ 无数据'; return } const analyzed = analyzeData(csv); renderCharts(analyzed) } catch (err) { document.getElementById('status').textContent = '❌ 错误:' + err.message; console.error(err) } }; reader.onerror = function () { document.getElementById('status').textContent = '❌ 读取失败' }; reader.readAsText(file, 'UTF-8') })</script>
 </body>
 
 </html>
