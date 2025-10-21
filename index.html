@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>宝宝日常生活日志</title>
+    <title>婴儿护理数据看板</title>
     <style>
         * {
             margin: 0;
@@ -20,25 +21,17 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 0 5px
+            padding: 0 10px
         }
 
         h1 {
             color: #fff;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: clamp(22px, 6vw, 32px);
+            margin-bottom: 20px;
+            font-size: clamp(20px, 5vw, 28px);
             text-shadow: 2px 2px 4px rgba(0, 0, 0, .2)
-        }
-
-        #babyAge {
-            display: block;
-            text-align: center;
-            color: #fff;
-            margin-bottom: 15px;
-            font-size: clamp(13px, 3.5vw, 16px)
         }
 
         .file-input-container {
@@ -47,7 +40,8 @@
             border-radius: 12px;
             margin-bottom: 15px;
             text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, .1)
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
+            transition: all .3s
         }
 
         .toggle-btn {
@@ -58,33 +52,6 @@
             cursor: pointer;
             padding: 5px;
             text-decoration: underline
-        }
-
-        #fileDetails {
-            margin-top: 12px
-        }
-
-        .birth-date-input {
-            margin: 12px 0;
-            text-align: center;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center
-        }
-
-        .birth-date-input label {
-            color: #667eea;
-            font-weight: 600;
-            font-size: 14px
-        }
-
-        .birth-date-input input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px
         }
 
         .file-label {
@@ -134,20 +101,20 @@
 
         .today-card {
             background: rgba(255, 255, 255, .15);
-            padding: clamp(10px, 2.5vw, 14px);
+            padding: clamp(8px, 2vw, 12px);
             border-radius: 8px;
             min-width: 0
         }
 
         .today-card h3 {
-            font-size: clamp(13px, 3.5vw, 16px);
-            margin-bottom: 8px;
+            font-size: clamp(12px, 3vw, 14px);
+            margin-bottom: 6px;
             font-weight: 700
         }
 
         .today-card .detail {
-            font-size: clamp(12px, 3vw, 14px);
-            margin: 5px 0;
+            font-size: clamp(11px, 2.5vw, 13px);
+            margin: 4px 0;
             display: grid;
             grid-template-columns: 1fr auto auto;
             gap: 5px;
@@ -155,15 +122,15 @@
         }
 
         .today-card .num {
-            font-size: clamp(15px, 4vw, 19px);
+            font-size: clamp(14px, 3.5vw, 18px);
             font-weight: 700
         }
 
         .latest-record {
-            font-size: clamp(11px, 2.5vw, 13px);
-            color: rgba(255, 255, 255, .85);
-            margin-top: 8px;
-            padding-top: 8px;
+            font-size: clamp(10px, 2vw, 12px);
+            color: rgba(255, 255, 255, .8);
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid rgba(255, 255, 255, .2);
             word-break: break-word
         }
@@ -185,25 +152,25 @@
         }
 
         .stat-card h3 {
-            font-size: clamp(13px, 3vw, 15px);
+            font-size: clamp(12px, 2.5vw, 14px);
             color: #666;
             margin-bottom: 8px
         }
 
         .stat-card .value {
-            font-size: clamp(24px, 6vw, 32px);
+            font-size: clamp(20px, 5vw, 28px);
             font-weight: 700;
             color: #667eea
         }
 
         .stat-card .unit {
-            font-size: clamp(12px, 2.5vw, 14px);
+            font-size: clamp(11px, 2vw, 13px);
             color: #999
         }
 
         .chart-container {
             background: rgba(255, 255, 255, .95);
-            padding: clamp(12px, 3vw, 18px);
+            padding: clamp(10px, 3vw, 18px);
             border-radius: 12px;
             margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, .1)
@@ -215,13 +182,13 @@
             align-items: center;
             margin-bottom: 12px;
             flex-wrap: wrap;
-            gap: 8px
+            gap: 10px
         }
 
         .chart-title {
             font-size: clamp(14px, 3.5vw, 18px);
             font-weight: 700;
-            color: #333
+            color: #333;
         }
 
         .time-dimension {
@@ -238,13 +205,17 @@
             cursor: pointer;
             font-size: clamp(11px, 2.5vw, 12px);
             font-weight: 600;
-            transition: all .2s
+            transition: all .2s;
         }
 
         .time-dimension button.active {
             background: #667eea;
             color: #fff;
-            border-color: #667eea
+            border-color: #667eea;
+        }
+
+        .time-dimension button:hover {
+            border-color: #667eea;
         }
 
         canvas {
@@ -261,22 +232,28 @@
         }
 
         @media (max-width:480px) {
-            .today-grid { grid-template-columns: 1fr }
-            .stats-grid { grid-template-columns: repeat(2, 1fr) }
+            .today-grid { grid-template-columns: 1fr; gap: 8px }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px }
+            .chart-header { flex-direction: column; align-items: flex-start; }
+            .time-dimension { width: 100%; }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>👶 宝宝日常生活日志</h1>
-        <span id="babyAge">计算中...</span>
+
+        <div style="text-align: center; color: #fff; margin-bottom: 15px; font-size: clamp(12px, 3vw, 14px);">
+            <span id="babyAge">计算中...</span>
+        </div>
 
         <div class="file-input-container" id="fileContainer">
             <button class="toggle-btn" id="toggleBtn" onclick="toggleFileSection()">📁 手动上传CSV（点击展开）</button>
             <div id="fileDetails" style="display:none">
-                <div class="birth-date-input">
-                    <label for="birthDate">🎂 宝宝出生日期：</label>
-                    <input type="date" id="birthDate" value="2025-03-17">
+                <div style="margin: 12px 0; text-align: left; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;">
+                    <label for="birthDate" style="color: #667eea; font-weight: 600; font-size: 14px;">🎂 宝宝出生日期：</label>
+                    <input type="date" id="birthDate" value="2025-03-17" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
                 </div>
                 <label for="csvFile" class="file-label">选择CSV文件</label>
                 <input type="file" id="csvFile" accept=".csv">
@@ -316,15 +293,24 @@
                 <div id="todayOther" class="today-grid" style="display:none">
                     <div class="today-card" id="weightCard" style="display:none">
                         <h3>⚖️ 体重</h3>
-                        <div style="text-align:center"><span class="num" id="todayWeight">-</span><span>kg</span></div>
+                        <div style="text-align:center">
+                            <span class="num" id="todayWeight">-</span>
+                            <span>kg</span>
+                        </div>
                     </div>
                     <div class="today-card" id="foodCard" style="display:none">
                         <h3>🥄 辅食</h3>
-                        <div style="text-align:center"><span class="num" id="todayFood">-</span><span>次</span></div>
+                        <div style="text-align:center">
+                            <span class="num" id="todayFood">-</span>
+                            <span>次</span>
+                        </div>
                     </div>
                     <div class="today-card" id="poopCard" style="display:none">
                         <h3>💩 大便</h3>
-                        <div style="text-align:center"><span class="num" id="todayPoop">-</span><span>次</span></div>
+                        <div style="text-align:center">
+                            <span class="num" id="todayPoop">-</span>
+                            <span>次</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -456,6 +442,24 @@
         var charts = {};
         var allAnalyzedData = {};
 
+        function calculateAndDisplayAge() {
+            var birthDateStr = document.getElementById('birthDate').value;
+            if (!birthDateStr) return;
+            
+            var birthDate = new Date(birthDateStr);
+            var today = new Date();
+            var months = (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
+            var days = today.getDate() - birthDate.getDate();
+            
+            if (days < 0) {
+                months--;
+                var lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+                days = lastMonth.getDate() - birthDate.getDate() + today.getDate();
+            }
+            
+            document.getElementById('babyAge').textContent = '宝宝已经 ' + months + ' 个月 ' + days + ' 天了 🎉';
+        }
+
         function toggleFileSection() {
             var details = document.getElementById('fileDetails');
             var btn = document.getElementById('toggleBtn');
@@ -466,21 +470,6 @@
                 details.style.display = 'none';
                 btn.textContent = '📁 手动上传CSV（点击展开）';
             }
-        }
-
-        function calculateAndDisplayAge() {
-            var birthDateStr = document.getElementById('birthDate').value;
-            if (!birthDateStr) return;
-            var birthDate = new Date(birthDateStr);
-            var today = new Date();
-            var months = (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
-            var days = today.getDate() - birthDate.getDate();
-            if (days < 0) {
-                months--;
-                var lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-                days = lastMonth.getDate() - birthDate.getDate() + today.getDate();
-            }
-            document.getElementById('babyAge').textContent = '宝宝已经 ' + months + ' 个月 ' + days + ' 天了 🎉';
         }
 
         function parseCSV(text) {
@@ -553,12 +542,16 @@
                         var end = new Date(ts.replace(' ', 'T'));
                         var h = (end - start) / 3600000;
                         if (h > 0 && h < 24) {
+                            // 使用开始时间来判断日期分类
                             var startDate = row.pair_key.split(' ')[0];
                             var startHour = parseInt(row.pair_key.split(' ')[1].split(':')[0]);
+                            
+                            // 如果凌晨0-6点，归到前一天；其他时间归到当天
                             var classifyDate = new Date(startDate + 'T00:00:00');
                             if (startHour < 6) {
                                 classifyDate.setDate(classifyDate.getDate() - 1);
                             }
+                            // 避免时区问题，手动构造日期字符串
                             var classifyFullDate = classifyDate.getFullYear() + '-' + 
                                                   String(classifyDate.getMonth() + 1).padStart(2, '0') + '-' + 
                                                   String(classifyDate.getDate()).padStart(2, '0');
@@ -577,8 +570,11 @@
                             var s = dailyStats[classifyShortDate];
                             s.sleep.push(h);
                             s.sleepEndTimes.push(end);
+                            
+                            // 根据开始时间判断白天/夜间
                             var isDay = startHour >= 6 && startHour < 20;
                             if (isDay) s.daySleep += h; else s.nightSleep += h;
+                            
                             if (classifyFullDate === today) latestRecords.sleep = { t: row.pair_key.split(' ')[1], h: h.toFixed(1) };
                         }
                     } catch (e) { }
@@ -606,7 +602,7 @@
             var result = {};
             dates.forEach(function (d) {
                 var s = dailyStats[d];
-                var total = s.sleep.reduce(function (a, b) { return a + b; }, 0);
+                var total = s.sleep.reduce(function (a, b) { return a + b }, 0);
                 
                 var feedIntervals = [];
                 for (var i = 1; i < s.feedTimes.length; i++) {
@@ -645,7 +641,7 @@
                     milk: todayData.milk, milkMin: todayData.milkMin,
                     formula: todayData.formula, formulaMl: todayData.formulaMl,
                     sleep: todayData.sleep,
-                    sleepTotal: todayData.sleep.reduce(function (a, b) { return a + b; }, 0),
+                    sleepTotal: todayData.sleep.reduce(function (a, b) { return a + b }, 0),
                     maxSleep: todayData.sleep.length > 0 ? Math.max.apply(null, todayData.sleep) : 0,
                     dayFeed: todayData.dayFeed, nightFeed: todayData.nightFeed,
                     daySleep: todayData.daySleep, nightSleep: todayData.nightSleep,
@@ -657,6 +653,7 @@
 
         function aggregateByDimension(data, dimension) {
             var result = {};
+            
             if (dimension === 'day') {
                 data.dates.forEach(function(d) {
                     result[d] = data.data[d];
@@ -721,31 +718,37 @@
                 });
                 result = months;
             }
+            
             return result;
         }
 
-        function renderChart(chartName, dimension) {
-            if (chartName === 'feed') renderFeedIntervalChart(dimension);
-            else if (chartName === 'sleep') renderSleepIntervalChart(dimension);
-            else if (chartName === 'chart1') renderFeedCountChart(dimension);
-            else if (chartName === 'chart2') renderFeedAmountChart(dimension);
-            else if (chartName === 'chart7') renderSleepChart(dimension);
-            else if (chartName === 'chart5') renderWeightChart(dimension);
-            else if (chartName === 'chart6') renderPoopChart(dimension);
-        }
-
-        function renderFeedIntervalChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderFeedIntervalChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.feedInterval) charts.feedInterval.destroy();
             if (labels.some(function(l) { return aggregated[l].feedIntervals.length > 0; })) {
                 charts.feedInterval = new Chart(document.getElementById('chartFeedInterval'), {
                     type: 'bar',
                     data: {
-                        labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
+                        labels: labels,
                         datasets: [
-                            { label: '白天平均间隔(小时)', data: labels.map(function(l) { var intervals = aggregated[l].feedIntervals.filter(function(x) { return x.isDay; }); return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0; }), backgroundColor: 'rgba(255,206,86,0.8)' },
-                            { label: '夜间平均间隔(小时)', data: labels.map(function(l) { var intervals = aggregated[l].feedIntervals.filter(function(x) { return !x.isDay; }); return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0; }), backgroundColor: 'rgba(153,102,255,0.8)' }
+                            {
+                                label: '白天平均间隔(小时)',
+                                data: labels.map(function(l) { 
+                                    var intervals = aggregated[l].feedIntervals.filter(function(x) { return x.isDay; });
+                                    return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0;
+                                }),
+                                backgroundColor: 'rgba(255,206,86,0.8)'
+                            },
+                            {
+                                label: '夜间平均间隔(小时)',
+                                data: labels.map(function(l) { 
+                                    var intervals = aggregated[l].feedIntervals.filter(function(x) { return !x.isDay; });
+                                    return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0;
+                                }),
+                                backgroundColor: 'rgba(153,102,255,0.8)'
+                            }
                         ]
                     },
                     options: { responsive: true, scales: { y: { beginAtZero: true } } }
@@ -753,18 +756,33 @@
             }
         }
 
-        function renderSleepIntervalChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderSleepIntervalChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.sleepInterval) charts.sleepInterval.destroy();
             if (labels.some(function(l) { return aggregated[l].sleepIntervals.length > 0; })) {
                 charts.sleepInterval = new Chart(document.getElementById('chartSleepInterval'), {
                     type: 'bar',
                     data: {
-                        labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
+                        labels: labels,
                         datasets: [
-                            { label: '白天平均间隔(小时)', data: labels.map(function(l) { var intervals = aggregated[l].sleepIntervals.filter(function(x) { return x.isDay; }); return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0; }), backgroundColor: 'rgba(255,206,86,0.8)' },
-                            { label: '夜间平均间隔(小时)', data: labels.map(function(l) { var intervals = aggregated[l].sleepIntervals.filter(function(x) { return !x.isDay; }); return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0; }), backgroundColor: 'rgba(153,102,255,0.8)' }
+                            {
+                                label: '白天平均间隔(小时)',
+                                data: labels.map(function(l) { 
+                                    var intervals = aggregated[l].sleepIntervals.filter(function(x) { return x.isDay; });
+                                    return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0;
+                                }),
+                                backgroundColor: 'rgba(255,206,86,0.8)'
+                            },
+                            {
+                                label: '夜间平均间隔(小时)',
+                                data: labels.map(function(l) { 
+                                    var intervals = aggregated[l].sleepIntervals.filter(function(x) { return !x.isDay; });
+                                    return intervals.length > 0 ? (intervals.reduce(function(a,b){return a+b.value}, 0)/intervals.length).toFixed(2) : 0;
+                                }),
+                                backgroundColor: 'rgba(153,102,255,0.8)'
+                            }
                         ]
                     },
                     options: { responsive: true, scales: { y: { beginAtZero: true } } }
@@ -772,14 +790,15 @@
             }
         }
 
-        function renderFeedCountChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderFeedCountChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.c1) charts.c1.destroy();
             charts.c1 = new Chart(document.getElementById('chart1'), {
                 type: 'bar',
                 data: {
-                    labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
+                    labels: labels,
                     datasets: [
                         { label: '白天喂奶(次)', data: labels.map(function(d) { return aggregated[d].dayFeed; }), backgroundColor: 'rgba(255,206,86,0.8)' },
                         { label: '夜间喂奶(次)', data: labels.map(function(d) { return aggregated[d].nightFeed; }), backgroundColor: 'rgba(153,102,255,0.8)' }
@@ -789,14 +808,15 @@
             });
         }
 
-        function renderFeedAmountChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderFeedAmountChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.c2) charts.c2.destroy();
             charts.c2 = new Chart(document.getElementById('chart2'), {
                 type: 'bar',
                 data: {
-                    labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
+                    labels: labels,
                     datasets: [
                         { label: '母乳(分钟)', data: labels.map(function(d) { return aggregated[d].milkMin; }), backgroundColor: 'rgba(255,159,64,0.6)', yAxisID: 'y1' },
                         { label: '奶粉(ml)', data: labels.map(function(d) { return aggregated[d].formulaMl; }), backgroundColor: 'rgba(54,162,235,0.6)', yAxisID: 'y2' }
@@ -815,10 +835,14 @@
                                 var chart = legend.chart;
                                 var meta = chart.getDatasetMeta(index);
                                 meta.hidden = !meta.hidden;
+                                
+                                // 检查并更新Y轴显示
                                 var dataset0Hidden = chart.getDatasetMeta(0).hidden;
                                 var dataset1Hidden = chart.getDatasetMeta(1).hidden;
+                                
                                 chart.options.scales.y1.display = !dataset0Hidden;
                                 chart.options.scales.y2.display = !dataset1Hidden;
+                                
                                 chart.update();
                             }
                         }
@@ -827,14 +851,15 @@
             });
         }
 
-        function renderSleepChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderSleepChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.c7) charts.c7.destroy();
             charts.c7 = new Chart(document.getElementById('chart7'), {
                 type: 'bar',
                 data: {
-                    labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
+                    labels: labels,
                     datasets: [
                         { label: '白天(h)', data: labels.map(function(d) { return aggregated[d].daySleep; }), backgroundColor: 'rgba(255,206,86,0.8)' },
                         { label: '夜间(h)', data: labels.map(function(d) { return aggregated[d].nightSleep; }), backgroundColor: 'rgba(153,102,255,0.8)' }
@@ -844,29 +869,41 @@
             });
         }
 
-        function renderWeightChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderWeightChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.c5) charts.c5.destroy();
             charts.c5 = new Chart(document.getElementById('chart5'), {
                 type: 'line',
                 data: {
-                    labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
-                    datasets: [{ label: '体重(kg)', data: labels.map(function(d) { return aggregated[d].weight; }), borderColor: 'rgba(75,192,192,1)', tension: 0.4, spanGaps: true }]
+                    labels: labels,
+                    datasets: [{
+                        label: '体重(kg)',
+                        data: labels.map(function(d) { return aggregated[d].weight; }),
+                        borderColor: 'rgba(75,192,192,1)',
+                        tension: 0.4,
+                        spanGaps: true
+                    }]
                 },
                 options: { responsive: true, scales: { y: { beginAtZero: false } } }
             });
         }
 
-        function renderPoopChart(dimension) {
-            var aggregated = aggregateByDimension(allAnalyzedData, dimension);
+        function renderPoopChart(analyzed, dimension) {
+            var aggregated = aggregateByDimension(analyzed, dimension);
             var labels = Object.keys(aggregated).sort();
+            
             if (charts.c6) charts.c6.destroy();
             charts.c6 = new Chart(document.getElementById('chart6'), {
                 type: 'bar',
                 data: {
-                    labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
-                    datasets: [{ label: '大便(次)', data: labels.map(function(d) { return aggregated[d].poop; }), backgroundColor: 'rgba(139,69,19,0.6)' }]
+                    labels: labels,
+                    datasets: [{
+                        label: '大便(次)',
+                        data: labels.map(function(d) { return aggregated[d].poop; }),
+                        backgroundColor: 'rgba(139,69,19,0.6)'
+                    }]
                 },
                 options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
@@ -876,7 +913,22 @@
             var parent = btn.parentElement;
             parent.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
-            renderChart(chartType, dimension);
+            
+            if (chartType === 'feed') {
+                renderFeedIntervalChart(allAnalyzedData, dimension);
+            } else if (chartType === 'sleep') {
+                renderSleepIntervalChart(allAnalyzedData, dimension);
+            } else if (chartType === 'chart1') {
+                renderFeedCountChart(allAnalyzedData, dimension);
+            } else if (chartType === 'chart2') {
+                renderFeedAmountChart(allAnalyzedData, dimension);
+            } else if (chartType === 'chart7') {
+                renderSleepChart(allAnalyzedData, dimension);
+            } else if (chartType === 'chart5') {
+                renderWeightChart(allAnalyzedData, dimension);
+            } else if (chartType === 'chart6') {
+                renderPoopChart(allAnalyzedData, dimension);
+            }
         }
 
         function renderToday(td, latest, foods) {
@@ -894,9 +946,15 @@
             document.getElementById('todayNightFeed').textContent = td.nightFeed;
             document.getElementById('todayNightSleep').textContent = td.nightSleep.toFixed(1);
 
-            if (latest.milk) document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 母乳 ' + latest.milk.t.substring(0, 5) + ' (' + latest.milk.v + '分钟)</div>';
-            if (latest.formula) document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 奶粉 ' + latest.formula.t.substring(0, 5) + ' (' + latest.formula.v + 'ml)</div>';
-            if (latest.sleep) document.getElementById('sleepCard').innerHTML += '<div class="latest-record">💤 ' + latest.sleep.t.substring(0, 5) + ' 醒来 (睡了' + latest.sleep.h + 'h)</div>';
+            if (latest.milk) {
+                document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 母乳 ' + latest.milk.t.substring(0, 5) + ' (' + latest.milk.v + '分钟)</div>';
+            }
+            if (latest.formula) {
+                document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 奶粉 ' + latest.formula.t.substring(0, 5) + ' (' + latest.formula.v + 'ml)</div>';
+            }
+            if (latest.sleep) {
+                document.getElementById('sleepCard').innerHTML += '<div class="latest-record">💤 ' + latest.sleep.t.substring(0, 5) + ' 醒来 (睡了' + latest.sleep.h + 'h)</div>';
+            }
 
             if (td.weight) {
                 document.getElementById('weightCard').style.display = 'block';
@@ -931,9 +989,9 @@
 
             renderToday(analyzed.today, analyzed.latest, analyzed.foods);
 
-            var totalS = dates.reduce(function (s, d) { return s + data[d].sleep; }, 0);
-            var totalF = dates.reduce(function (s, d) { return s + data[d].formulaMl; }, 0);
-            var totalM = dates.reduce(function (s, d) { return s + data[d].milkMin; }, 0);
+            var totalS = dates.reduce(function (s, d) { return s + data[d].sleep }, 0);
+            var totalF = dates.reduce(function (s, d) { return s + data[d].formulaMl }, 0);
+            var totalM = dates.reduce(function (s, d) { return s + data[d].milkMin }, 0);
             var totalFeedGaps = [];
             var totalSleepGaps = [];
             dates.forEach(function(d) {
@@ -952,13 +1010,13 @@
 
             Chart.defaults.font.size = 12;
 
-            renderChart('feed', 'day');
-            renderChart('sleep', 'day');
-            renderChart('chart1', 'day');
-            renderChart('chart2', 'day');
-            renderChart('chart7', 'day');
-            renderChart('chart5', 'day');
-            renderChart('chart6', 'day');
+            renderFeedIntervalChart(analyzed, 'day');
+            renderSleepIntervalChart(analyzed, 'day');
+            renderFeedCountChart(analyzed, 'day');
+            renderFeedAmountChart(analyzed, 'day');
+            renderSleepChart(analyzed, 'day');
+            renderWeightChart(analyzed, 'day');
+            renderPoopChart(analyzed, 'day');
 
             document.getElementById('status').textContent = '✅ 加载成功！共 ' + dates.length + ' 天数据';
         }
@@ -980,7 +1038,9 @@
         document.getElementById('birthDate').addEventListener('change', calculateAndDisplayAge);
 
         window.addEventListener('load', function () {
+            // 初始化显示宝宝年龄
             calculateAndDisplayAge();
+            
             fetch('./baby_log.csv', { cache: 'no-cache' })
                 .then(function (r) { return r.text(); })
                 .then(function (text) {
@@ -996,4 +1056,5 @@
         });
     </script>
 </body>
+
 </html>
