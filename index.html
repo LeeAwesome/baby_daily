@@ -855,14 +855,11 @@
         }
 
         function saveSettings(event) {
-            alert('saveSettings 函数被调用了！'); // 调试信息
             event.preventDefault();
             
             try {
                 var babyName = document.getElementById('babyNameInput').value;
                 var birthDate = document.getElementById('birthDateInput').value;
-                
-                alert('获取到的数据: ' + babyName + ', ' + birthDate); // 调试信息
                 
                 localStorage.setItem('babyName', babyName);
                 localStorage.setItem('birthDate', birthDate);
@@ -885,7 +882,8 @@
                 // 显示成功提示
                 showSuccessMessage('✅ 设置已保存！');
             } catch (error) {
-                alert('发生错误: ' + error.message);
+                console.error('保存设置时出错:', error);
+                showSuccessMessage('❌ 保存失败，请重试');
             }
         }
 
@@ -935,19 +933,13 @@
             updatePageTitle();
             calculateAndDisplayAge();
             
-            // 为表单添加事件监听器（备用方案，以防内联onsubmit不工作）
+            // 为表单添加事件监听器
             var settingsForm = document.getElementById('settingsForm');
             if (settingsForm) {
-                console.log('找到表单，添加事件监听器');
-                // 移除可能存在的旧监听器
                 settingsForm.onsubmit = null;
-                // 添加新的监听器
                 settingsForm.addEventListener('submit', function(e) {
-                    console.log('===表单提交事件被触发===');
                     saveSettings(e);
                 }, false);
-            } else {
-                console.error('未找到settingsForm元素');
             }
         }
 
