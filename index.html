@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>宝宝日常生活日志</title>
+    <title>宝宝日常</title>
     <style>
         * {
             margin: 0;
@@ -25,12 +25,160 @@
             padding: 0 5px
         }
 
+        .header-container {
+            position: relative;
+            margin-bottom: 10px
+        }
+
+        .settings-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1)
+        }
+
         h1 {
             color: #fff;
             text-align: center;
-            margin-bottom: 10px;
+            margin: 0;
             font-size: clamp(22px, 6vw, 32px);
             text-shadow: 2px 2px 4px rgba(0, 0, 0, .2)
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center
+        }
+
+        .modal-overlay.show {
+            display: flex
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            color: #667eea;
+            font-size: 24px
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s
+        }
+
+        .close-btn:hover {
+            color: #333;
+            transform: scale(1.1)
+        }
+
+        .form-group {
+            margin-bottom: 20px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            box-sizing: border-box
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea
+        }
+
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s
+        }
+
+        .save-btn:hover {
+            background: #5568d3
         }
 
         #babyAge {
@@ -304,8 +452,23 @@
 
         @media (max-width: 600px) {
             .chart-header {
-                flex-direction: column;
-                align-items: flex-start
+                gap: 8px;
+                margin-bottom: 12px
+            }
+            
+            .chart-title {
+                font-size: 14px;
+                flex: 1;
+                min-width: auto
+            }
+            
+            .time-dimension {
+                gap: 5px
+            }
+            
+            .time-dimension button {
+                padding: 5px 10px;
+                font-size: 11px
             }
         }
 
@@ -316,7 +479,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 宝宝日常生活日志</h1>
+        <div class="header-container">
+            <button class="settings-btn" onclick="openSettings()" title="设置">⚙️</button>
+            <h1>📊 宝宝日常</h1>
+        </div>
         <span id="babyAge">正在计算...</span>
 
         <div id="fileContainer" class="file-input-container">
@@ -628,6 +794,28 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<!-- 设置模态框 -->
+    <div id="settingsModal" class="modal-overlay" onclick="closeSettingsIfClickOutside(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>⚙️ 设置</h2>
+                <button class="close-btn" onclick="closeSettings()">×</button>
+            </div>
+            <form id="settingsForm">
+                <div class="form-group">
+                    <label for="babyNameInput">👶 宝宝名字（选填）</label>
+                    <input type="text" id="babyNameInput" placeholder="例如：小明">
+                </div>
+                <div class="form-group">
+                    <label for="birthDateInput">📅 宝宝生日 *</label>
+                    <input type="date" id="birthDateInput" required>
+                </div>
+                <button type="submit" class="save-btn">💾 保存设置</button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // 统一的白天/夜间颜色方案
         var COLORS = {
@@ -641,6 +829,127 @@
         
         var charts = {};
         var allAnalyzedData = {};
+
+
+        // 配置相关函数
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('show');
+            loadSettings();
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('show');
+        }
+
+        function closeSettingsIfClickOutside(event) {
+            if (event.target.id === 'settingsModal') {
+                closeSettings();
+            }
+        }
+
+        function loadSettings() {
+            var babyName = localStorage.getItem('babyName') || '';
+            var birthDate = localStorage.getItem('birthDate') || '2025-02-24';
+            document.getElementById('babyNameInput').value = babyName;
+            document.getElementById('birthDateInput').value = birthDate;
+        }
+
+        function saveSettings(event) {
+            alert('saveSettings 函数被调用了！'); // 调试信息
+            event.preventDefault();
+            
+            try {
+                var babyName = document.getElementById('babyNameInput').value;
+                var birthDate = document.getElementById('birthDateInput').value;
+                
+                alert('获取到的数据: ' + babyName + ', ' + birthDate); // 调试信息
+                
+                localStorage.setItem('babyName', babyName);
+                localStorage.setItem('birthDate', birthDate);
+                
+                // 更新隐藏的birthDate输入框（如果存在）
+                var birthDateInput = document.getElementById('birthDate');
+                if (birthDateInput) {
+                    birthDateInput.value = birthDate;
+                }
+                
+                // 更新年龄显示
+                calculateAndDisplayAge();
+                
+                // 更新标题
+                updatePageTitle();
+                
+                // 关闭弹窗
+                closeSettings();
+                
+                // 显示成功提示
+                showSuccessMessage('✅ 设置已保存！');
+            } catch (error) {
+                alert('发生错误: ' + error.message);
+            }
+        }
+
+        function showSuccessMessage(message) {
+            // 创建提示元素
+            var toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-size: 16px; animation: slideDown 0.3s ease-out;';
+            
+            // 添加动画
+            var style = document.createElement('style');
+            style.textContent = '@keyframes slideDown { from { transform: translateX(-50%) translateY(-20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }';
+            document.head.appendChild(style);
+            
+            document.body.appendChild(toast);
+            
+            // 3秒后移除
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(function() {
+                    document.body.removeChild(toast);
+                    document.head.removeChild(style);
+                }, 300);
+            }, 2000);
+        }
+
+        function updatePageTitle() {
+            var babyName = localStorage.getItem('babyName');
+            var h1 = document.querySelector('h1');
+            if (babyName && babyName.trim() !== '') {
+                h1.textContent = '📊 ' + babyName + '的日常';
+            } else {
+                h1.textContent = '📊 宝宝日常';
+            }
+        }
+
+        function initializeSettings() {
+            // 从localStorage加载出生日期
+            var savedBirthDate = localStorage.getItem('birthDate');
+            if (savedBirthDate) {
+                var birthDateEl = document.getElementById('birthDate');
+                if (birthDateEl) {
+                    birthDateEl.value = savedBirthDate;
+                }
+            }
+            updatePageTitle();
+            calculateAndDisplayAge();
+            
+            // 为表单添加事件监听器（备用方案，以防内联onsubmit不工作）
+            var settingsForm = document.getElementById('settingsForm');
+            if (settingsForm) {
+                console.log('找到表单，添加事件监听器');
+                // 移除可能存在的旧监听器
+                settingsForm.onsubmit = null;
+                // 添加新的监听器
+                settingsForm.addEventListener('submit', function(e) {
+                    console.log('===表单提交事件被触发===');
+                    saveSettings(e);
+                }, false);
+            } else {
+                console.error('未找到settingsForm元素');
+            }
+        }
 
         function toggleFileSection() {
             var details = document.getElementById('fileDetails');
@@ -669,8 +978,17 @@
         }
 
         function calculateAndDisplayAge() {
-            var birthDateStr = document.getElementById('birthDate').value;
+            // 优先从localStorage读取，如果没有则从input元素读取
+            var birthDateStr = localStorage.getItem('birthDate');
+            if (!birthDateStr) {
+                var birthDateInput = document.getElementById('birthDate');
+                if (birthDateInput) {
+                    birthDateStr = birthDateInput.value;
+                }
+            }
+            
             if (!birthDateStr) return;
+            
             var birthDate = new Date(birthDateStr);
             var today = new Date();
             var months = (today.getFullYear() - birthDate.getFullYear()) * 12 + (today.getMonth() - birthDate.getMonth());
@@ -680,7 +998,12 @@
                 var lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
                 days = lastMonth.getDate() - birthDate.getDate() + today.getDate();
             }
-            document.getElementById('babyAge').textContent = '宝宝已经 ' + months + ' 个月 ' + days + ' 天了 🎉';
+            
+            // 获取宝宝名字
+            var babyName = localStorage.getItem('babyName');
+            var displayName = (babyName && babyName.trim() !== '') ? babyName : '宝宝';
+            
+            document.getElementById('babyAge').textContent = displayName + '已经 ' + months + ' 个月 ' + days + ' 天了 🎉';
         }
 
         function parseCSV(text) {
@@ -1396,7 +1719,7 @@
         document.getElementById('birthDate').addEventListener('change', calculateAndDisplayAge);
 
         window.addEventListener('load', function () {
-            calculateAndDisplayAge();
+            initializeSettings();
             fetch('./baby_log.csv', { cache: 'no-cache' })
                 .then(function (r) { return r.text(); })
                 .then(function (text) {
@@ -1411,5 +1734,6 @@
                 });
         });
     </script>
+
 </body>
 </html>
