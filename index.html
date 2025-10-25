@@ -1639,6 +1639,11 @@
 
         function renderToday(td, latest, foods) {
             if (!td) return;
+            
+            // 清空之前的记录数据（防止重复）
+            var latestRecords = document.querySelectorAll('.latest-record');
+            latestRecords.forEach(function(el) { el.remove(); });
+            
             var now = new Date();
             document.getElementById('todayDate').textContent = '(' + (now.getMonth() + 1) + '/' + now.getDate() + ')';
             document.getElementById('todayFeedCount').textContent = td.milk + td.formula;
