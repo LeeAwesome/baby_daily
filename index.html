@@ -30,28 +30,47 @@
             margin-bottom: 10px
         }
 
-        .settings-btn {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+        .settings-btn, .refresh-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
             color: #fff;
             width: 40px;
             height: 40px;
-            border-radius: 50%;
+            border-radius: 8px;
             font-size: 20px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s
+            transition: all 0.3s;
         }
 
-        .settings-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-50%) scale(1.1)
+        .settings-btn {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .refresh-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .settings-btn:hover, .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-50%) scale(1.05)
+        }
+
+        .refresh-btn.loading {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: translateY(-50%) rotate(0deg); }
+            to { transform: translateY(-50%) rotate(360deg); }
         }
 
         h1 {
@@ -480,8 +499,9 @@
 <body>
     <div class="container">
         <div class="header-container">
-            <button class="settings-btn" onclick="openSettings()" title="设置">⚙️</button>
+            <button class="settings-btn" onclick="openSettings()" title="设置">☰</button>
             <h1>📊 宝宝日常</h1>
+            <button class="refresh-btn" onclick="refreshData()" title="刷新数据">⟳</button>
         </div>
         <span id="babyAge">正在计算...</span>
 
@@ -919,6 +939,31 @@
             } else {
                 h1.textContent = '📊 宝宝日常';
             }
+        }
+
+        function refreshData() {
+            var btn = document.querySelector('.refresh-btn');
+            btn.classList.add('loading');
+            
+            fetch('./baby_log.csv', { cache: 'no-cache' })
+                .then(function (r) { return r.text(); })
+                .then(function (text) {
+                    var csv = parseCSV(text);
+                    if (csv.length > 0) {
+                        allAnalyzedData = analyzeData(csv);
+                        renderCharts(allAnalyzedData);
+                        showSuccessMessage('✅ 数据已刷新！');
+                    } else {
+                        showSuccessMessage('⚠️ 没有找到数据');
+                    }
+                })
+                .catch(function (error) {
+                    console.error('刷新失败:', error);
+                    showSuccessMessage('❌ 刷新失败，请检查文件');
+                })
+                .finally(function() {
+                    btn.classList.remove('loading');
+                });
         }
 
         function initializeSettings() {
