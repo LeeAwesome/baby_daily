@@ -1109,17 +1109,28 @@
             var provider = document.getElementById('llmProvider').value;
             var llmFields = document.getElementById('llmFields');
             var endpointGroup = document.getElementById('llmEndpointGroup');
+            var endpointInput = document.getElementById('llmEndpoint');
+            var modelInput = document.getElementById('llmModel');
             
             if (provider) {
                 llmFields.style.display = 'block';
+                endpointGroup.style.display = 'block';
+                
+                // 只在字段为空时才设置默认值，不覆盖用户输入
                 if (provider === 'openai') {
-                    document.getElementById('llmEndpoint').value = 'https://api.openai.com/v1';
-                    document.getElementById('llmModel').value = 'gpt-4';
-                    endpointGroup.style.display = 'block';
+                    if (!endpointInput.value) {
+                        endpointInput.value = 'https://api.openai.com/v1';
+                    }
+                    if (!modelInput.value) {
+                        modelInput.value = 'gpt-4';
+                    }
                 } else if (provider === 'claude') {
-                    document.getElementById('llmEndpoint').value = 'https://api.anthropic.com';
-                    document.getElementById('llmModel').value = 'claude-3-5-sonnet-20241022';
-                    endpointGroup.style.display = 'block';
+                    if (!endpointInput.value) {
+                        endpointInput.value = 'https://api.anthropic.com';
+                    }
+                    if (!modelInput.value) {
+                        modelInput.value = 'claude-3-5-sonnet-20241022';
+                    }
                 }
             } else {
                 llmFields.style.display = 'none';
