@@ -1034,15 +1034,25 @@
                             <input type="text" id="llmModel" placeholder="gpt-4 或 claude-3-5-sonnet-20241022">
                         </div>
                         <!-- Azure 特有字段 -->
+                        <div class="form-group" id="azureResourceNameGroup" style="display: none;">
+                            <label for="azureResourceName">Resource Name *</label>
+                            <input type="text" id="azureResourceName" placeholder="例如：ME/MFG-SMT-CoC-Dev">
+                            <small style="color: #999; margin-top: 5px; display: block;">从Azure Portal复制，可能包含路径（如a/b/c）</small>
+                        </div>
                         <div class="form-group" id="azureVersionGroup" style="display: none;">
                             <label for="azureApiVersion">API Version *</label>
-                            <input type="text" id="azureApiVersion" placeholder="2024-02-01">
-                            <small style="color: #999; margin-top: 5px; display: block;">例如: 2024-02-01, 2023-05-15</small>
+                            <input type="text" id="azureApiVersion" placeholder="例如：2025-03-01-preview">
+                            <small style="color: #999; margin-top: 5px; display: block;">例如: 2025-03-01-preview, 2024-02-01, 2023-05-15</small>
+                        </div>
+                        <div class="form-group" id="azureEndpointGroup" style="display: none;">
+                            <label for="azureEndpoint">Endpoint *</label>
+                            <input type="url" id="azureEndpoint" placeholder="https://your-resource.openai.azure.com/">
+                            <small style="color: #999; margin-top: 5px; display: block;">完整的Azure OpenAI端点URL</small>
                         </div>
                         <div class="form-group" id="azureDeploymentGroup" style="display: none;">
                             <label for="azureDeploymentName">Deployment Name *</label>
-                            <input type="text" id="azureDeploymentName" placeholder="你在Azure中部署的模型名称">
-                            <small style="color: #999; margin-top: 5px; display: block;">注意：这是部署名称，不是模型名称</small>
+                            <input type="text" id="azureDeploymentName" placeholder="例如：gpt-4-deployment">
+                            <small style="color: #999; margin-top: 5px; display: block;">在Azure中部署的模型名称</small>
                         </div>
                     </div>
 
@@ -1106,7 +1116,11 @@
             var llmApiKey = localStorage.getItem('llmApiKey') || '';
             var llmEndpoint = localStorage.getItem('llmEndpoint') || '';
             var llmModel = localStorage.getItem('llmModel') || '';
+            
+            // Azure特有字段
+            var azureResourceName = localStorage.getItem('azureResourceName') || '';
             var azureApiVersion = localStorage.getItem('azureApiVersion') || '';
+            var azureEndpoint = localStorage.getItem('azureEndpoint') || '';
             var azureDeploymentName = localStorage.getItem('azureDeploymentName') || '';
             
             document.getElementById('babyNameInput').value = babyName;
@@ -1117,8 +1131,14 @@
             document.getElementById('llmModel').value = llmModel;
             
             // 加载Azure特有字段
+            if (document.getElementById('azureResourceName')) {
+                document.getElementById('azureResourceName').value = azureResourceName;
+            }
             if (document.getElementById('azureApiVersion')) {
                 document.getElementById('azureApiVersion').value = azureApiVersion;
+            }
+            if (document.getElementById('azureEndpoint')) {
+                document.getElementById('azureEndpoint').value = azureEndpoint;
             }
             if (document.getElementById('azureDeploymentName')) {
                 document.getElementById('azureDeploymentName').value = azureDeploymentName;
@@ -1133,19 +1153,27 @@
             var endpointGroup = document.getElementById('llmEndpointGroup');
             var endpointInput = document.getElementById('llmEndpoint');
             var modelInput = document.getElementById('llmModel');
+            var modelGroup = document.getElementById('llmModelGroup');
+            
+            // Azure特有字段
+            var azureResourceNameGroup = document.getElementById('azureResourceNameGroup');
             var azureVersionGroup = document.getElementById('azureVersionGroup');
+            var azureEndpointGroup = document.getElementById('azureEndpointGroup');
             var azureDeploymentGroup = document.getElementById('azureDeploymentGroup');
             
             if (provider) {
                 llmFields.style.display = 'block';
+                
+                // 默认隐藏所有Azure字段
+                if (azureResourceNameGroup) azureResourceNameGroup.style.display = 'none';
+                if (azureVersionGroup) azureVersionGroup.style.display = 'none';
+                if (azureEndpointGroup) azureEndpointGroup.style.display = 'none';
+                if (azureDeploymentGroup) azureDeploymentGroup.style.display = 'none';
                 endpointGroup.style.display = 'block';
+                modelGroup.style.display = 'block';
                 
-                // 隐藏所有Azure字段
-                azureVersionGroup.style.display = 'none';
-                azureDeploymentGroup.style.display = 'none';
-                
-                // 只在字段为空时才设置默认值，不覆盖用户输入
                 if (provider === 'openai') {
+                    // 标准OpenAI
                     if (!endpointInput.value) {
                         endpointInput.value = 'https://api.openai.com/v1';
                     }
@@ -1153,17 +1181,18 @@
                         modelInput.value = 'gpt-4';
                     }
                 } else if (provider === 'azure') {
-                    // 显示Azure特有字段
-                    azureVersionGroup.style.display = 'block';
-                    azureDeploymentGroup.style.display = 'block';
+                    // Azure OpenAI - 显示所有5个Azure字段
+                    if (azureResourceNameGroup) azureResourceNameGroup.style.display = 'block';
+                    if (azureVersionGroup) azureVersionGroup.style.display = 'block';
+                    if (azureEndpointGroup) azureEndpointGroup.style.display = 'block';
+                    if (azureDeploymentGroup) azureDeploymentGroup.style.display = 'block';
                     
-                    if (!endpointInput.value) {
-                        endpointInput.placeholder = 'https://your-resource-name.openai.azure.com/';
-                        endpointInput.value = 'https://your-resource-name.openai.azure.com/';
-                    }
-                    modelInput.style.display = 'none';
-                    document.getElementById('llmModelGroup').style.display = 'none';
+                    // 隐藏通用的endpoint和model字段（Azure用专有字段）
+                    endpointGroup.style.display = 'none';
+                    modelGroup.style.display = 'none';
+                    
                 } else if (provider === 'claude') {
+                    // Claude
                     if (!endpointInput.value) {
                         endpointInput.value = 'https://api.anthropic.com';
                     }
@@ -1186,7 +1215,11 @@
                 var llmApiKey = document.getElementById('llmApiKey').value;
                 var llmEndpoint = document.getElementById('llmEndpoint').value;
                 var llmModel = document.getElementById('llmModel').value;
+                
+                // Azure特有字段
+                var azureResourceName = document.getElementById('azureResourceName') ? document.getElementById('azureResourceName').value : '';
                 var azureApiVersion = document.getElementById('azureApiVersion') ? document.getElementById('azureApiVersion').value : '';
+                var azureEndpoint = document.getElementById('azureEndpoint') ? document.getElementById('azureEndpoint').value : '';
                 var azureDeploymentName = document.getElementById('azureDeploymentName') ? document.getElementById('azureDeploymentName').value : '';
                 
                 localStorage.setItem('babyName', babyName);
@@ -1196,13 +1229,17 @@
                 localStorage.setItem('llmProvider', llmProvider);
                 if (llmProvider) {
                     localStorage.setItem('llmApiKey', llmApiKey);
-                    localStorage.setItem('llmEndpoint', llmEndpoint);
-                    localStorage.setItem('llmModel', llmModel);
                     
-                    // 保存Azure特有字段
                     if (llmProvider === 'azure') {
+                        // 保存Azure特有字段
+                        localStorage.setItem('azureResourceName', azureResourceName);
                         localStorage.setItem('azureApiVersion', azureApiVersion);
+                        localStorage.setItem('azureEndpoint', azureEndpoint);
                         localStorage.setItem('azureDeploymentName', azureDeploymentName);
+                    } else {
+                        // 保存通用字段
+                        localStorage.setItem('llmEndpoint', llmEndpoint);
+                        localStorage.setItem('llmModel', llmModel);
                     }
                 }
                 
@@ -1395,8 +1432,6 @@
 
         function callOpenAI(dataContext, loadingMsg, sendBtn) {
             var apiKey = localStorage.getItem('llmApiKey');
-            var endpoint = localStorage.getItem('llmEndpoint') || 'https://api.openai.com/v1';
-            var model = localStorage.getItem('llmModel') || 'gpt-4';
             var provider = localStorage.getItem('llmProvider');
             
             var systemPrompt = `你是一个专业的婴儿护理助手。用户会向你询问关于他们宝宝的问题。以下是最近的宝宝数据:\n\n${dataContext}\n\n请根据这些数据和用户的问题提供有帮助的建议。`;
@@ -1411,76 +1446,173 @@
             var apiUrl, headers, body;
             
             if (provider === 'azure') {
-                // Azure OpenAI 特殊格式
+                // Azure OpenAI - 使用5个独立字段
+                var azureResourceName = localStorage.getItem('azureResourceName');
                 var azureApiVersion = localStorage.getItem('azureApiVersion');
+                var azureEndpoint = localStorage.getItem('azureEndpoint');
                 var azureDeploymentName = localStorage.getItem('azureDeploymentName');
                 
-                if (!azureApiVersion || !azureDeploymentName) {
-                    addMessageToChat('❌ 错误：Azure配置不完整，请确保填写API Version和Deployment Name', false);
+                // 验证所有必要字段
+                if (!apiKey || !azureResourceName || !azureApiVersion || !azureEndpoint || !azureDeploymentName) {
+                    var missing = [];
+                    if (!apiKey) missing.push('API Key');
+                    if (!azureResourceName) missing.push('Resource Name');
+                    if (!azureApiVersion) missing.push('API Version');
+                    if (!azureEndpoint) missing.push('Endpoint');
+                    if (!azureDeploymentName) missing.push('Deployment Name');
+                    
+                    addMessageToChat('❌ 错误：Azure配置不完整\n缺少: ' + missing.join(', '), false);
                     sendBtn.disabled = false;
                     loadingMsg.remove();
                     return;
                 }
                 
-                // Azure URL格式：https://resource-name.openai.azure.com/openai/deployments/deployment-name/chat/completions?api-version=version
-                apiUrl = endpoint.replace(/\/$/, '') + '/openai/deployments/' + azureDeploymentName + '/chat/completions?api-version=' + azureApiVersion;
+                // 构建Azure URL格式
+                // https://endpoint/openai/deployments/deployment-name/chat/completions?api-version=version
+                apiUrl = azureEndpoint.replace(/\/$/, '') + '/openai/deployments/' + azureDeploymentName + '/chat/completions?api-version=' + azureApiVersion;
                 
                 headers = {
                     'Content-Type': 'application/json',
-                    'api-key': apiKey  // Azure使用api-key而不是Authorization
+                    'api-key': apiKey  // Azure使用api-key header
                 };
+                
+                console.log('🔵 [Azure] Resource Name:', azureResourceName);
+                console.log('🔵 [Azure] Endpoint:', azureEndpoint);
+                console.log('🔵 [Azure] Deployment:', azureDeploymentName);
+                console.log('🔵 [Azure] API Version:', azureApiVersion);
+                console.log('🔵 [Azure] Final URL:', apiUrl);
+                
             } else {
-                // 标准OpenAI
-                apiUrl = endpoint + '/chat/completions';
-                headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + apiKey
-                };
+                // OpenAI 或 Claude
+                var endpoint = localStorage.getItem('llmEndpoint');
+                var model = localStorage.getItem('llmModel');
+                
+                if (provider === 'openai') {
+                    apiUrl = endpoint + '/chat/completions';
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    };
+                } else if (provider === 'claude') {
+                    apiUrl = endpoint + '/v1/messages';
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01'
+                    };
+                }
             }
             
-            body = JSON.stringify({
-                model: provider === 'azure' ? undefined : model,  // Azure不需要model字段
-                messages: messages,
-                temperature: 0.7,
-                max_tokens: 1000
+            // 构建request body
+            if (provider === 'azure') {
+                // Azure不需要model字段
+                body = JSON.stringify({
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 1000
+                });
+            } else if (provider === 'claude') {
+                // Claude格式
+                var model = localStorage.getItem('llmModel');
+                body = JSON.stringify({
+                    model: model,
+                    max_tokens: 1000,
+                    system: systemPrompt,
+                    messages: chatHistory
+                });
+            } else {
+                // OpenAI格式
+                var model = localStorage.getItem('llmModel');
+                body = JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 1000
+                });
+            }
+            
+            console.log('📤 Request URL:', apiUrl);
+            console.log('📤 Request Headers:', headers);
+            console.log('📤 Request Body:', body.substring(0, 200) + '...');
+            
+            // 创建超时Promise
+            var timeoutPromise = new Promise(function(resolve, reject) {
+                setTimeout(function() {
+                    reject(new Error('请求超时（30秒）- 服务器可能无响应或网络缓慢'));
+                }, 30000); // 30秒超时
             });
             
-            // 移除model字段如果是Azure
-            if (provider === 'azure') {
-                var bodyObj = JSON.parse(body);
-                delete bodyObj.model;
-                body = JSON.stringify(bodyObj);
-            }
-            
-            fetch(apiUrl, {
+            // 执行请求
+            var fetchPromise = fetch(apiUrl, {
                 method: 'POST',
                 headers: headers,
                 body: body
-            })
+            });
+            
+            // 添加详细的错误处理
+            Promise.race([fetchPromise, timeoutPromise])
             .then(function(response) {
+                console.log('✅ 响应状态码:', response.status);
+                
                 if (!response.ok) {
-                    return response.json().then(function(errData) {
-                        throw new Error('API错误: ' + response.status + ' - ' + (errData.error?.message || JSON.stringify(errData)));
+                    return response.text().then(function(text) {
+                        console.error('❌ 错误响应:', text);
+                        try {
+                            var errData = JSON.parse(text);
+                            var errorMsg = errData.error?.message || JSON.stringify(errData);
+                            throw new Error('API错误 ' + response.status + ': ' + errorMsg);
+                        } catch(e) {
+                            throw new Error('API错误 ' + response.status + ': ' + text.substring(0, 100));
+                        }
                     });
                 }
                 return response.json();
             })
             .then(function(data) {
+                console.log('✅ 响应数据:', data);
                 loadingMsg.remove();
-                if (data.choices && data.choices[0] && data.choices[0].message) {
-                    var assistantMessage = data.choices[0].message.content;
+                
+                var assistantMessage;
+                
+                if (provider === 'claude') {
+                    // Claude响应格式
+                    if (data.content && data.content[0] && data.content[0].text) {
+                        assistantMessage = data.content[0].text;
+                    }
+                } else {
+                    // OpenAI和Azure响应格式
+                    if (data.choices && data.choices[0] && data.choices[0].message) {
+                        assistantMessage = data.choices[0].message.content;
+                    }
+                }
+                
+                if (assistantMessage) {
                     chatHistory.push({ role: 'assistant', content: assistantMessage });
                     addMessageToChat(assistantMessage, false);
                 } else {
-                    addMessageToChat('❌ 无法获取响应', false);
+                    addMessageToChat('❌ 无法获取响应: ' + JSON.stringify(data), false);
                 }
                 sendBtn.disabled = false;
             })
             .catch(function(error) {
+                console.error('❌ 完整错误:', error);
                 loadingMsg.remove();
-                addMessageToChat('❌ 错误: ' + error.message, false);
+                
+                var errorMsg = error.message;
+                
+                // 智能错误诊断
+                if (errorMsg.includes('CORS')) {
+                    errorMsg += '\n\n💡 CORS错误 - 可能需要使用服务器代理';
+                } else if (errorMsg.includes('超时')) {
+                    errorMsg += '\n\n💡 检查：\n1. Endpoint是否正确\n2. Deployment Name是否存在\n3. 网络连接';
+                } else if (errorMsg.includes('404')) {
+                    errorMsg += '\n\n💡 资源不存在 - 检查：\n1. Deployment Name\n2. API Version\n3. Resource Name';
+                } else if (errorMsg.includes('401') || errorMsg.includes('403')) {
+                    errorMsg += '\n\n💡 认证失败 - 检查API Key是否正确';
+                }
+                
+                addMessageToChat('❌ 错误: ' + errorMsg, false);
                 sendBtn.disabled = false;
-                console.error('API调用错误:', error);
             });
         }
 
