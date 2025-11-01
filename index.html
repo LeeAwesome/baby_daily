@@ -640,11 +640,31 @@
             color: #fff
         }
 
+        .chart-slide-wrapper {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chart-slide-inner {
+            transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+            will-change: transform;
+        }
+
+        .chart-slide-inner.sliding-left {
+            transform: translateX(-100%);
+        }
+
+        .chart-slide-inner.sliding-right {
+            transform: translateX(100%);
+        }
+
         canvas {
             max-height: 300px;
             touch-action: pan-y;
             cursor: grab;
             user-select: none;
+            display: block;
+            width: 100%;
         }
 
         canvas:active {
@@ -918,7 +938,11 @@
                         <button onclick="changeTimeDimension(this, 'feedCount', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="feedCountChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="feedCountChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -930,7 +954,11 @@
                         <button onclick="changeTimeDimension(this, 'feedAmount', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="feedAmountChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="feedAmountChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -942,7 +970,11 @@
                         <button onclick="changeTimeDimension(this, 'sleepDuration', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="sleepDurationChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="sleepDurationChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -954,7 +986,11 @@
                         <button onclick="changeTimeDimension(this, 'sleepInterval', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="sleepIntervalChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="sleepIntervalChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -966,7 +1002,11 @@
                         <button onclick="changeTimeDimension(this, 'feedInterval', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="feedIntervalChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="feedIntervalChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -978,7 +1018,11 @@
                         <button onclick="changeTimeDimension(this, 'weight', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="weightChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container">
@@ -990,7 +1034,11 @@
                         <button onclick="changeTimeDimension(this, 'poop', 'month')">月</button>
                     </div>
                 </div>
-                <canvas id="poopChart"></canvas>
+                <div class="chart-slide-wrapper">
+                    <div class="chart-slide-inner">
+                        <canvas id="poopChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2268,27 +2316,71 @@
             var newPage = pagination.currentPage + direction;
             
             if (newPage >= 0 && newPage < pagination.totalPages) {
-                pagination.currentPage = newPage;
+                // 获取图表容器
+                var canvas = document.getElementById(chartType + 'Chart');
+                var slideInner = canvas.closest('.chart-slide-inner');
                 
-                // 获取当前活跃的维度按钮
-                var chartContainer = document.getElementById(chartType + 'Chart').closest('.chart-container');
-                var activeBtn = chartContainer.querySelector('.time-dimension button.active');
-                var dimension = 'day';
-                if (activeBtn) {
-                    var onclickStr = activeBtn.getAttribute('onclick');
-                    if (onclickStr.includes("'week'")) dimension = 'week';
-                    else if (onclickStr.includes("'month'")) dimension = 'month';
+                if (!slideInner) {
+                    // 如果没有找到滑动容器，直接渲染（向后兼容）
+                    pagination.currentPage = newPage;
+                    renderChartByType(chartType);
+                    return;
                 }
                 
-                // 重新渲染图表
-                if (chartType === 'feedCount') renderFeedCountChart(dimension);
-                else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
-                else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
-                else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
-                else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
-                else if (chartType === 'weight') renderWeightChart(dimension);
-                else if (chartType === 'poop') renderPoopChart(dimension);
+                // 添加滑动动画类
+                var slideClass = direction > 0 ? 'sliding-right' : 'sliding-left';
+                slideInner.classList.add(slideClass);
+                
+                // 等待动画完成后更新数据
+                setTimeout(function() {
+                    // 更新页码
+                    pagination.currentPage = newPage;
+                    
+                    // 获取当前活跃的维度按钮
+                    var chartContainer = canvas.closest('.chart-container');
+                    var activeBtn = chartContainer.querySelector('.time-dimension button.active');
+                    var dimension = 'day';
+                    if (activeBtn) {
+                        var onclickStr = activeBtn.getAttribute('onclick');
+                        if (onclickStr.includes("'week'")) dimension = 'week';
+                        else if (onclickStr.includes("'month'")) dimension = 'month';
+                    }
+                    
+                    // 重新渲染图表（从另一侧滑入）
+                    if (chartType === 'feedCount') renderFeedCountChart(dimension);
+                    else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
+                    else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
+                    else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
+                    else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
+                    else if (chartType === 'weight') renderWeightChart(dimension);
+                    else if (chartType === 'poop') renderPoopChart(dimension);
+                    
+                    // 移除动画类并重置位置
+                    setTimeout(function() {
+                        slideInner.classList.remove(slideClass);
+                    }, 50);
+                }, 300); // 动画持续时间
             }
+        }
+        
+        // 辅助函数：根据图表类型渲染
+        function renderChartByType(chartType) {
+            var chartContainer = document.getElementById(chartType + 'Chart').closest('.chart-container');
+            var activeBtn = chartContainer.querySelector('.time-dimension button.active');
+            var dimension = 'day';
+            if (activeBtn) {
+                var onclickStr = activeBtn.getAttribute('onclick');
+                if (onclickStr.includes("'week'")) dimension = 'week';
+                else if (onclickStr.includes("'month'")) dimension = 'month';
+            }
+            
+            if (chartType === 'feedCount') renderFeedCountChart(dimension);
+            else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
+            else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
+            else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
+            else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
+            else if (chartType === 'weight') renderWeightChart(dimension);
+            else if (chartType === 'poop') renderPoopChart(dimension);
         }
         
         // 为单个图表绑定滑动事件
