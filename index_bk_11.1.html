@@ -641,14 +641,7 @@
         }
 
         canvas {
-            max-height: 300px;
-            touch-action: pan-y;
-            cursor: grab;
-            user-select: none;
-        }
-
-        canvas:active {
-            cursor: grabbing;
+            max-height: 300px
         }
 
         @media (max-width: 600px) {
@@ -1015,11 +1008,6 @@
                         <label for="birthDateInput">宝宝生日 *</label>
                         <input type="date" id="birthDateInput" required>
                     </div>
-                    <div class="form-group">
-                        <label for="defaultChartDaysInput">图表默认显示天数</label>
-                        <input type="number" id="defaultChartDaysInput" min="3" max="30" value="5" placeholder="建议4-7天">
-                        <small style="color: #999; margin-top: 5px; display: block;">设置图表默认显示的天数（3-30天），其余数据可左右滑动查看</small>
-                    </div>
 
                     <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 16px;">🤖 AI助手配置</h3>
                     <div class="form-group">
@@ -1103,18 +1091,6 @@
         
         var charts = {};
         var allAnalyzedData = {};
-        
-        // 图表分页状态
-        var chartPagination = {
-            feedCount: { currentPage: 0, totalPages: 0 },
-            feedAmount: { currentPage: 0, totalPages: 0 },
-            sleepDuration: { currentPage: 0, totalPages: 0 },
-            sleepInterval: { currentPage: 0, totalPages: 0 },
-            feedInterval: { currentPage: 0, totalPages: 0 },
-            weight: { currentPage: 0, totalPages: 0 },
-            poop: { currentPage: 0, totalPages: 0 }
-        };
-        var defaultChartDays = 5; // 默认显示天数
 
 
         // 配置相关函数
@@ -1140,7 +1116,6 @@
             var llmApiKey = localStorage.getItem('llmApiKey') || '';
             var llmEndpoint = localStorage.getItem('llmEndpoint') || '';
             var llmModel = localStorage.getItem('llmModel') || '';
-            var chartDays = localStorage.getItem('defaultChartDays') || '5';
             
             // Azure特有字段
             var azureResourceName = localStorage.getItem('azureResourceName') || '';
@@ -1150,7 +1125,6 @@
             
             document.getElementById('babyNameInput').value = babyName;
             document.getElementById('birthDateInput').value = birthDate;
-            document.getElementById('defaultChartDaysInput').value = chartDays;
             document.getElementById('llmProvider').value = llmProvider;
             document.getElementById('llmApiKey').value = llmApiKey;
             document.getElementById('llmEndpoint').value = llmEndpoint;
@@ -1237,7 +1211,6 @@
             try {
                 var babyName = document.getElementById('babyNameInput').value;
                 var birthDate = document.getElementById('birthDateInput').value;
-                var chartDays = document.getElementById('defaultChartDaysInput').value;
                 var llmProvider = document.getElementById('llmProvider').value;
                 var llmApiKey = document.getElementById('llmApiKey').value;
                 var llmEndpoint = document.getElementById('llmEndpoint').value;
@@ -1251,10 +1224,6 @@
                 
                 localStorage.setItem('babyName', babyName);
                 localStorage.setItem('birthDate', birthDate);
-                localStorage.setItem('defaultChartDays', chartDays);
-                
-                // 更新全局变量
-                defaultChartDays = parseInt(chartDays) || 5;
                 
                 // 保存LLM配置
                 localStorage.setItem('llmProvider', llmProvider);
@@ -1288,11 +1257,6 @@
                 
                 // 关闭弹窗
                 closeSettings();
-                
-                // 如果数据已加载，重新渲染图表
-                if (allAnalyzedData && allAnalyzedData.dates && allAnalyzedData.dates.length > 0) {
-                    renderCharts(allAnalyzedData);
-                }
                 
                 // 显示成功提示
                 showSuccessMessage('✅ 设置已保存！');
@@ -1716,13 +1680,6 @@
                     birthDateEl.value = savedBirthDate;
                 }
             }
-            
-            // 加载默认图表显示天数
-            var savedChartDays = localStorage.getItem('defaultChartDays');
-            if (savedChartDays) {
-                defaultChartDays = parseInt(savedChartDays) || 5;
-            }
-            
             updatePageTitle();
             calculateAndDisplayAge();
             
@@ -2219,9 +2176,6 @@
         }
 
         function renderChart(chartType, dimension) {
-            // 重置当前图表的分页状态
-            chartPagination[chartType].currentPage = 0;
-            
             if (chartType === 'feedCount') renderFeedCountChart(dimension);
             else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
             else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
@@ -2230,211 +2184,11 @@
             else if (chartType === 'weight') renderWeightChart(dimension);
             else if (chartType === 'poop') renderPoopChart(dimension);
         }
-        
-        // 图表分页辅助函数
-        function getPaginatedData(labels, chartType) {
-            var totalItems = labels.length;
-            var pageSize = defaultChartDays;
-            var totalPages = Math.ceil(totalItems / pageSize);
-            var currentPage = chartPagination[chartType].currentPage;
-            
-            // 确保当前页在有效范围内
-            if (currentPage >= totalPages) currentPage = totalPages - 1;
-            if (currentPage < 0) currentPage = 0;
-            
-            chartPagination[chartType].currentPage = currentPage;
-            chartPagination[chartType].totalPages = totalPages;
-            
-            // 计算起始和结束索引（显示最新的数据）
-            var endIndex = totalItems - (currentPage * pageSize);
-            var startIndex = Math.max(0, endIndex - pageSize);
-            
-            // 获取当前页的标签
-            var paginatedLabels = labels.slice(startIndex, endIndex);
-            
-            return {
-                labels: paginatedLabels,
-                startIndex: startIndex,
-                endIndex: endIndex,
-                totalPages: totalPages,
-                currentPage: currentPage
-            };
-        }
-        
-        // 更新页码信息
-        // 图表导航函数
-        function navigateChart(chartType, direction) {
-            var pagination = chartPagination[chartType];
-            var newPage = pagination.currentPage + direction;
-            
-            if (newPage >= 0 && newPage < pagination.totalPages) {
-                pagination.currentPage = newPage;
-                
-                // 获取当前活跃的维度按钮
-                var chartContainer = document.getElementById(chartType + 'Chart').closest('.chart-container');
-                var activeBtn = chartContainer.querySelector('.time-dimension button.active');
-                var dimension = 'day';
-                if (activeBtn) {
-                    var onclickStr = activeBtn.getAttribute('onclick');
-                    if (onclickStr.includes("'week'")) dimension = 'week';
-                    else if (onclickStr.includes("'month'")) dimension = 'month';
-                }
-                
-                // 重新渲染图表
-                if (chartType === 'feedCount') renderFeedCountChart(dimension);
-                else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
-                else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
-                else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
-                else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
-                else if (chartType === 'weight') renderWeightChart(dimension);
-                else if (chartType === 'poop') renderPoopChart(dimension);
-            }
-        }
-        
-        // 为单个图表绑定滑动事件
-        var chartEventHandlers = {}; // 存储事件处理器
-        
-        function bindSwipeToChart(chartType) {
-            var canvas = document.getElementById(chartType + 'Chart');
-            if (!canvas) return;
-            
-            // 如果已经绑定过，先移除旧的事件
-            if (chartEventHandlers[chartType]) {
-                var handlers = chartEventHandlers[chartType];
-                canvas.removeEventListener('touchstart', handlers.touchstart);
-                canvas.removeEventListener('touchmove', handlers.touchmove);
-                canvas.removeEventListener('touchend', handlers.touchend);
-                canvas.removeEventListener('mousedown', handlers.mousedown);
-                canvas.removeEventListener('mousemove', handlers.mousemove);
-                canvas.removeEventListener('mouseup', handlers.mouseup);
-                canvas.removeEventListener('mouseleave', handlers.mouseleave);
-            }
-            
-            var startX = 0;
-            var startY = 0;
-            var isDragging = false;
-            var mouseDown = false;
-            var mouseStartX = 0;
-            
-            // 触摸事件处理器
-            var touchstartHandler = function(e) {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                isDragging = true;
-            };
-            
-            var touchmoveHandler = function(e) {
-                if (!isDragging) return;
-                var moveX = e.touches[0].clientX - startX;
-                var moveY = e.touches[0].clientY - startY;
-                
-                if (Math.abs(moveX) > Math.abs(moveY)) {
-                    e.preventDefault();
-                }
-            };
-            
-            var touchendHandler = function(e) {
-                if (!isDragging) return;
-                
-                var endX = e.changedTouches[0].clientX;
-                var endY = e.changedTouches[0].clientY;
-                var deltaX = endX - startX;
-                var deltaY = endY - startY;
-                
-                isDragging = false;
-                
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        navigateChart(chartType, -1);
-                    } else {
-                        navigateChart(chartType, 1);
-                    }
-                }
-            };
-            
-            // 鼠标事件处理器
-            var mousedownHandler = function(e) {
-                mouseDown = true;
-                mouseStartX = e.clientX;
-                canvas.style.cursor = 'grabbing';
-            };
-            
-            var mousemoveHandler = function(e) {
-                if (mouseDown) {
-                    e.preventDefault();
-                }
-            };
-            
-            var mouseupHandler = function(e) {
-                if (!mouseDown) return;
-                
-                var deltaX = e.clientX - mouseStartX;
-                mouseDown = false;
-                canvas.style.cursor = 'grab';
-                
-                if (Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        navigateChart(chartType, -1);
-                    } else {
-                        navigateChart(chartType, 1);
-                    }
-                }
-            };
-            
-            var mouseleaveHandler = function() {
-                mouseDown = false;
-                canvas.style.cursor = 'grab';
-            };
-            
-            // 绑定事件
-            canvas.addEventListener('touchstart', touchstartHandler, { passive: true });
-            canvas.addEventListener('touchmove', touchmoveHandler, { passive: false });
-            canvas.addEventListener('touchend', touchendHandler, { passive: true });
-            canvas.addEventListener('mousedown', mousedownHandler);
-            canvas.addEventListener('mousemove', mousemoveHandler);
-            canvas.addEventListener('mouseup', mouseupHandler);
-            canvas.addEventListener('mouseleave', mouseleaveHandler);
-            
-            // 保存事件处理器引用
-            chartEventHandlers[chartType] = {
-                touchstart: touchstartHandler,
-                touchmove: touchmoveHandler,
-                touchend: touchendHandler,
-                mousedown: mousedownHandler,
-                mousemove: mousemoveHandler,
-                mouseup: mouseupHandler,
-                mouseleave: mouseleaveHandler
-            };
-        }
-        
-        // 初始化触摸滑动支持
-        function initChartSwipe() {
-            var chartTypes = ['feedCount', 'feedAmount', 'sleepDuration', 'sleepInterval', 'feedInterval', 'weight', 'poop'];
-            chartTypes.forEach(function(chartType) {
-                bindSwipeToChart(chartType);
-            });
-        }
 
         // 1. 喂奶次数（白天/夜间，区分母乳和奶粉）
         function renderFeedCountChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 数据验证
-            if (!allLabels || allLabels.length === 0) {
-                console.log('renderFeedCountChart: 没有数据');
-                return;
-            }
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedCount');
-            var labels = paginated.labels;
-            
-            if (!labels || labels.length === 0) {
-                console.log('renderFeedCountChart: 分页后没有数据');
-                return;
-            }
-            
+            var labels = Object.keys(aggregated).sort();
             if (charts.feedCount) charts.feedCount.destroy();
             charts.feedCount = new Chart(document.getElementById('feedCountChart'), {
                 type: 'bar',
@@ -2448,73 +2202,43 @@
                     ]
                 },
                 options: { 
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    interaction: {
-                        mode: 'index'
-                    },
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
+                    responsive: true, 
                     scales: { 
-                        y: { display: false },
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
                         x: { stacked: true }
                     } 
                 }
             });
-            
-            // 重新绑定滑动事件
-            bindSwipeToChart('feedCount');
         }
 
         // 2. 每日喂奶量（母乳和奶粉）
-        // 2. 每日喂奶量（母乳和奶粉）
         function renderFeedAmountChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedAmount');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             if (charts.feedAmount) charts.feedAmount.destroy();
             charts.feedAmount = new Chart(document.getElementById('feedAmountChart'), {
                 type: 'bar',
                 data: {
                     labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
                     datasets: [
-                        { label: '奶粉(ml)', data: labels.map(function(d) { return aggregated[d].formulaMl; }), backgroundColor: 'rgba(255,206,86,0.8)' },
-                        { label: '母乳(min)', data: labels.map(function(d) { return aggregated[d].milkMin; }), backgroundColor: 'rgba(153,102,255,0.8)' }
+                        { label: '奶粉(ml)', data: labels.map(function(d) { return aggregated[d].formulaMl; }), backgroundColor: 'rgba(255,206,86,0.8)', yAxisID: 'y1' },
+                        { label: '母乳(min)', data: labels.map(function(d) { return aggregated[d].milkMin; }), backgroundColor: 'rgba(153,102,255,0.8)', yAxisID: 'y2' }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
                     scales: {
-                        y: { display: false }
+                        y1: { type: 'linear', position: 'left', beginAtZero: true, title: { display: true, text: '奶粉(ml)' } },
+                        y2: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: '母乳(min)' } }
                     }
                 }
             });
-            
-            bindSwipeToChart('feedAmount');
         }
 
         // 3. 睡眠时长（白天/夜间）
-        // 3. 睡眠时长（白天/夜间）
-        // 3. 睡眠时长（白天/夜间）
         function renderSleepDurationChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'sleepDuration');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             if (charts.sleepDuration) charts.sleepDuration.destroy();
             charts.sleepDuration = new Chart(document.getElementById('sleepDurationChart'), {
                 type: 'bar',
@@ -2525,32 +2249,14 @@
                         { label: '夜间(h)', data: labels.map(function(d) { return aggregated[d].nightSleep; }), backgroundColor: COLORS.NIGHT }
                     ]
                 },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: { 
-                        y: { display: false },
-                        x: { stacked: true }
-                    } 
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true, stacked: true }, x: { stacked: true } } }
             });
-            
-            bindSwipeToChart('sleepDuration');
         }
 
         // 4. 睡眠间隔（白天/夜间）
         function renderSleepIntervalChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'sleepInterval');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             var dayIntervals = labels.map(function(d) {
                 var intervals = aggregated[d].sleepIntervals.filter(function(i) { return i.isDay; });
                 return intervals.length > 0 ? (intervals.reduce(function(sum, i) { return sum + i.value; }, 0) / intervals.length) : 0;
@@ -2559,7 +2265,6 @@
                 var intervals = aggregated[d].sleepIntervals.filter(function(i) { return !i.isDay; });
                 return intervals.length > 0 ? (intervals.reduce(function(sum, i) { return sum + i.value; }, 0) / intervals.length) : 0;
             });
-            
             if (charts.sleepInterval) charts.sleepInterval.destroy();
             charts.sleepInterval = new Chart(document.getElementById('sleepIntervalChart'), {
                 type: 'bar',
@@ -2570,29 +2275,14 @@
                         { label: '夜间间隔(h)', data: nightIntervals, backgroundColor: COLORS.NIGHT }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: { y: { display: false } }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
             });
-            
-            bindSwipeToChart('sleepInterval');
         }
 
         // 5. 喂奶间隔（白天/夜间）
         function renderFeedIntervalChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedInterval');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             var dayIntervals = labels.map(function(d) {
                 var intervals = aggregated[d].feedIntervals.filter(function(i) { return i.isDay; });
                 return intervals.length > 0 ? (intervals.reduce(function(sum, i) { return sum + i.value; }, 0) / intervals.length) : 0;
@@ -2601,7 +2291,6 @@
                 var intervals = aggregated[d].feedIntervals.filter(function(i) { return !i.isDay; });
                 return intervals.length > 0 ? (intervals.reduce(function(sum, i) { return sum + i.value; }, 0) / intervals.length) : 0;
             });
-            
             if (charts.feedInterval) charts.feedInterval.destroy();
             charts.feedInterval = new Chart(document.getElementById('feedIntervalChart'), {
                 type: 'bar',
@@ -2612,83 +2301,29 @@
                         { label: '夜间间隔(h)', data: nightIntervals, backgroundColor: COLORS.NIGHT }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: { y: { display: false } }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
             });
-            
-            bindSwipeToChart('feedInterval');
         }
 
         // 6. 体重变化
-        // 6. 体重变化
         function renderWeightChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'weight');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             if (charts.weight) charts.weight.destroy();
             charts.weight = new Chart(document.getElementById('weightChart'), {
                 type: 'line',
                 data: {
                     labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
-                    datasets: [{ 
-                        label: '体重(kg)', 
-                        data: labels.map(function(d) { return aggregated[d].weight; }), 
-                        borderColor: 'rgba(75,192,192,1)', 
-                        backgroundColor: 'rgba(75,192,192,0.1)',
-                        tension: 0.4, 
-                        spanGaps: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
+                    datasets: [{ label: '体重(kg)', data: labels.map(function(d) { return aggregated[d].weight; }), borderColor: 'rgba(75,192,192,1)', tension: 0.4, spanGaps: true }]
                 },
-                options: { 
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: { 
-                        y: { 
-                            beginAtZero: false,
-                            display: true,
-                            ticks: {
-                                count: 3,
-                                font: { size: 10 },
-                                color: 'rgba(255,255,255,0.7)'
-                            },
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)',
-                                drawBorder: false
-                            }
-                        }
-                    }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: false } } }
             });
-            
-            bindSwipeToChart('weight');
         }
 
         // 7. 大便次数
         function renderPoopChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
-            var allLabels = Object.keys(aggregated).sort();
-            
-            // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'poop');
-            var labels = paginated.labels;
-            
+            var labels = Object.keys(aggregated).sort();
             if (charts.poop) charts.poop.destroy();
             charts.poop = new Chart(document.getElementById('poopChart'), {
                 type: 'bar',
@@ -2696,18 +2331,8 @@
                     labels: labels.map(function(l) { return dimension === 'week' || dimension === 'month' ? l.substring(5) : l; }),
                     datasets: [{ label: '大便(次)', data: labels.map(function(d) { return aggregated[d].poop; }), backgroundColor: 'rgba(139,69,19,0.6)' }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: true },
-                        tooltip: { enabled: true }
-                    },
-                    scales: { y: { display: false } }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
-            
-            bindSwipeToChart('poop');
         }
 
         function changeTimeDimension(btn, chartType, dimension) {
@@ -2782,15 +2407,9 @@
         }
 
         function renderCharts(analyzed) {
-            console.log('renderCharts called', analyzed);
             var data = analyzed.data;
             var dates = analyzed.dates;
-            if (dates.length === 0) {
-                console.log('No dates found');
-                return;
-            }
-            
-            console.log('Dates length:', dates.length);
+            if (dates.length === 0) return;
 
             document.getElementById('dataContainer').style.display = 'block';
             document.getElementById('fileContainer').style.display = 'none';
@@ -2828,9 +2447,6 @@
             renderChart('poop', 'day');
 
             document.getElementById('status').textContent = '✅ 加载成功！共 ' + dates.length + ' 天数据';
-            
-            // 初始化触摸滑动支持
-            initChartSwipe();
         }
 
         document.getElementById('csvFile').addEventListener('change', function (e) {
