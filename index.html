@@ -643,19 +643,12 @@
         .chart-slide-wrapper {
             overflow: hidden;
             position: relative;
+            width: 100%;
         }
 
         .chart-slide-inner {
-            transition: transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
             will-change: transform;
-        }
-
-        .chart-slide-inner.sliding-left {
-            transform: translateX(-100%);
-        }
-
-        .chart-slide-inner.sliding-right {
-            transform: translateX(100%);
+            position: relative;
         }
 
         canvas {
@@ -1153,14 +1146,14 @@
         var allAnalyzedData = {};
         
         // 图表分页状态
-        var chartPagination = {
-            feedCount: { currentPage: 0, totalPages: 0 },
-            feedAmount: { currentPage: 0, totalPages: 0 },
-            sleepDuration: { currentPage: 0, totalPages: 0 },
-            sleepInterval: { currentPage: 0, totalPages: 0 },
-            feedInterval: { currentPage: 0, totalPages: 0 },
-            weight: { currentPage: 0, totalPages: 0 },
-            poop: { currentPage: 0, totalPages: 0 }
+        var chartScroll = {
+            feedCount: { offset: 0, totalItems: 0 },
+            feedAmount: { offset: 0, totalItems: 0 },
+            sleepDuration: { offset: 0, totalItems: 0 },
+            sleepInterval: { offset: 0, totalItems: 0 },
+            feedInterval: { offset: 0, totalItems: 0 },
+            weight: { offset: 0, totalItems: 0 },
+            poop: { offset: 0, totalItems: 0 }
         };
         var defaultChartDays = 5; // 默认显示天数
 
@@ -2267,8 +2260,8 @@
         }
 
         function renderChart(chartType, dimension) {
-            // 重置当前图表的分页状态
-            chartPagination[chartType].currentPage = 0;
+            // 重置当前图表的滚动状态
+            chartScroll[chartType].offset = 0;
             
             if (chartType === 'feedCount') renderFeedCountChart(dimension);
             else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
@@ -2279,108 +2272,36 @@
             else if (chartType === 'poop') renderPoopChart(dimension);
         }
         
-        // 图表分页辅助函数
-        function getPaginatedData(labels, chartType) {
+        // 图表滚动辅助函数（替代分页）
+        function getVisibleData(labels, chartType) {
             var totalItems = labels.length;
-            var pageSize = defaultChartDays;
-            var totalPages = Math.ceil(totalItems / pageSize);
-            var currentPage = chartPagination[chartType].currentPage;
+            var visibleCount = defaultChartDays;
+            var offset = chartScroll[chartType].offset;
             
-            // 确保当前页在有效范围内
-            if (currentPage >= totalPages) currentPage = totalPages - 1;
-            if (currentPage < 0) currentPage = 0;
+            // 存储总数据量
+            chartScroll[chartType].totalItems = totalItems;
             
-            chartPagination[chartType].currentPage = currentPage;
-            chartPagination[chartType].totalPages = totalPages;
+            // 限制offset范围：0 到 (totalItems - visibleCount)
+            var maxOffset = Math.max(0, totalItems - visibleCount);
+            if (offset < 0) offset = 0;
+            if (offset > maxOffset) offset = maxOffset;
             
-            // 计算起始和结束索引（显示最新的数据）
-            var endIndex = totalItems - (currentPage * pageSize);
-            var startIndex = Math.max(0, endIndex - pageSize);
+            chartScroll[chartType].offset = offset;
             
-            // 获取当前页的标签
-            var paginatedLabels = labels.slice(startIndex, endIndex);
+            // 计算显示范围（从最新数据往前算）
+            var endIndex = totalItems - Math.floor(offset);
+            var startIndex = Math.max(0, endIndex - visibleCount);
+            
+            // 获取可见数据
+            var visibleLabels = labels.slice(startIndex, endIndex);
             
             return {
-                labels: paginatedLabels,
+                labels: visibleLabels,
                 startIndex: startIndex,
                 endIndex: endIndex,
-                totalPages: totalPages,
-                currentPage: currentPage
+                maxOffset: maxOffset,
+                currentOffset: offset
             };
-        }
-        
-        // 更新页码信息
-        // 图表导航函数
-        function navigateChart(chartType, direction) {
-            var pagination = chartPagination[chartType];
-            var newPage = pagination.currentPage + direction;
-            
-            if (newPage >= 0 && newPage < pagination.totalPages) {
-                // 获取图表容器
-                var canvas = document.getElementById(chartType + 'Chart');
-                var slideInner = canvas.closest('.chart-slide-inner');
-                
-                if (!slideInner) {
-                    // 如果没有找到滑动容器，直接渲染（向后兼容）
-                    pagination.currentPage = newPage;
-                    renderChartByType(chartType);
-                    return;
-                }
-                
-                // 添加滑动动画类
-                var slideClass = direction > 0 ? 'sliding-right' : 'sliding-left';
-                slideInner.classList.add(slideClass);
-                
-                // 等待动画完成后更新数据
-                setTimeout(function() {
-                    // 更新页码
-                    pagination.currentPage = newPage;
-                    
-                    // 获取当前活跃的维度按钮
-                    var chartContainer = canvas.closest('.chart-container');
-                    var activeBtn = chartContainer.querySelector('.time-dimension button.active');
-                    var dimension = 'day';
-                    if (activeBtn) {
-                        var onclickStr = activeBtn.getAttribute('onclick');
-                        if (onclickStr.includes("'week'")) dimension = 'week';
-                        else if (onclickStr.includes("'month'")) dimension = 'month';
-                    }
-                    
-                    // 重新渲染图表（从另一侧滑入）
-                    if (chartType === 'feedCount') renderFeedCountChart(dimension);
-                    else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
-                    else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
-                    else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
-                    else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
-                    else if (chartType === 'weight') renderWeightChart(dimension);
-                    else if (chartType === 'poop') renderPoopChart(dimension);
-                    
-                    // 移除动画类并重置位置
-                    setTimeout(function() {
-                        slideInner.classList.remove(slideClass);
-                    }, 50);
-                }, 300); // 动画持续时间
-            }
-        }
-        
-        // 辅助函数：根据图表类型渲染
-        function renderChartByType(chartType) {
-            var chartContainer = document.getElementById(chartType + 'Chart').closest('.chart-container');
-            var activeBtn = chartContainer.querySelector('.time-dimension button.active');
-            var dimension = 'day';
-            if (activeBtn) {
-                var onclickStr = activeBtn.getAttribute('onclick');
-                if (onclickStr.includes("'week'")) dimension = 'week';
-                else if (onclickStr.includes("'month'")) dimension = 'month';
-            }
-            
-            if (chartType === 'feedCount') renderFeedCountChart(dimension);
-            else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
-            else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
-            else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
-            else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
-            else if (chartType === 'weight') renderWeightChart(dimension);
-            else if (chartType === 'poop') renderPoopChart(dimension);
         }
         
         // 为单个图表绑定滑动事件
@@ -2390,6 +2311,9 @@
             var canvas = document.getElementById(chartType + 'Chart');
             if (!canvas) return;
             
+            var slideInner = canvas.closest('.chart-slide-inner');
+            if (!slideInner) return;
+            
             // 如果已经绑定过，先移除旧的事件
             if (chartEventHandlers[chartType]) {
                 var handlers = chartEventHandlers[chartType];
@@ -2397,95 +2321,133 @@
                 canvas.removeEventListener('touchmove', handlers.touchmove);
                 canvas.removeEventListener('touchend', handlers.touchend);
                 canvas.removeEventListener('mousedown', handlers.mousedown);
-                canvas.removeEventListener('mousemove', handlers.mousemove);
-                canvas.removeEventListener('mouseup', handlers.mouseup);
-                canvas.removeEventListener('mouseleave', handlers.mouseleave);
+                document.removeEventListener('mousemove', handlers.mousemove);
+                document.removeEventListener('mouseup', handlers.mouseup);
             }
             
             var startX = 0;
             var startY = 0;
+            var currentX = 0;
             var isDragging = false;
-            var mouseDown = false;
-            var mouseStartX = 0;
+            var containerWidth = 0;
+            var startOffset = 0; // 记录开始拖拽时的offset
             
-            // 触摸事件处理器
+            // 辅助函数：根据图表类型重新渲染
+            function reRenderChart() {
+                var chartContainer = canvas.closest('.chart-container');
+                var activeBtn = chartContainer.querySelector('.time-dimension button.active');
+                var dimension = 'day';
+                if (activeBtn) {
+                    var onclickStr = activeBtn.getAttribute('onclick');
+                    if (onclickStr.includes("'week'")) dimension = 'week';
+                    else if (onclickStr.includes("'month'")) dimension = 'month';
+                }
+                
+                if (chartType === 'feedCount') renderFeedCountChart(dimension);
+                else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
+                else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
+                else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
+                else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
+                else if (chartType === 'weight') renderWeightChart(dimension);
+                else if (chartType === 'poop') renderPoopChart(dimension);
+            }
+            
+            // 触摸开始
             var touchstartHandler = function(e) {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
+                currentX = 0;
                 isDragging = true;
+                containerWidth = slideInner.offsetWidth;
+                startOffset = chartScroll[chartType].offset;
+                
+                slideInner.style.transform = 'translateX(0)';
             };
             
+            // 触摸移动 - 实时跟随手指
             var touchmoveHandler = function(e) {
                 if (!isDragging) return;
+                
                 var moveX = e.touches[0].clientX - startX;
                 var moveY = e.touches[0].clientY - startY;
                 
+                // 判断是否为水平滑动
                 if (Math.abs(moveX) > Math.abs(moveY)) {
                     e.preventDefault();
+                    currentX = moveX;
+                    
+                    // 实时更新位置
+                    slideInner.style.transform = 'translateX(' + moveX + 'px)';
                 }
             };
             
+            // 触摸结束 - 更新offset并重新渲染
             var touchendHandler = function(e) {
                 if (!isDragging) return;
-                
-                var endX = e.changedTouches[0].clientX;
-                var endY = e.changedTouches[0].clientY;
-                var deltaX = endX - startX;
-                var deltaY = endY - startY;
-                
                 isDragging = false;
                 
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        navigateChart(chartType, -1);
-                    } else {
-                        navigateChart(chartType, 1);
-                    }
-                }
+                // 计算滚动的数据量（基于移动距离）
+                var itemWidth = containerWidth / defaultChartDays; // 每个数据点的宽度
+                var offsetChange = -currentX / itemWidth; // 负号是因为向右滑动应该查看更早的数据
+                
+                // 更新offset
+                chartScroll[chartType].offset = startOffset + offsetChange;
+                
+                // 重新渲染
+                slideInner.style.transform = 'translateX(0)';
+                reRenderChart();
             };
             
             // 鼠标事件处理器
             var mousedownHandler = function(e) {
-                mouseDown = true;
-                mouseStartX = e.clientX;
+                startX = e.clientX;
+                startY = e.clientY;
+                currentX = 0;
+                isDragging = true;
+                containerWidth = slideInner.offsetWidth;
+                startOffset = chartScroll[chartType].offset;
+                
+                slideInner.style.transform = 'translateX(0)';
                 canvas.style.cursor = 'grabbing';
+                
+                e.preventDefault();
             };
             
             var mousemoveHandler = function(e) {
-                if (mouseDown) {
+                if (!isDragging) return;
+                
+                var moveX = e.clientX - startX;
+                var moveY = e.clientY - startY;
+                
+                if (Math.abs(moveX) > Math.abs(moveY)) {
                     e.preventDefault();
+                    currentX = moveX;
+                    
+                    slideInner.style.transform = 'translateX(' + moveX + 'px)';
                 }
             };
             
             var mouseupHandler = function(e) {
-                if (!mouseDown) return;
-                
-                var deltaX = e.clientX - mouseStartX;
-                mouseDown = false;
+                if (!isDragging) return;
+                isDragging = false;
                 canvas.style.cursor = 'grab';
                 
-                if (Math.abs(deltaX) > 50) {
-                    if (deltaX > 0) {
-                        navigateChart(chartType, -1);
-                    } else {
-                        navigateChart(chartType, 1);
-                    }
-                }
-            };
-            
-            var mouseleaveHandler = function() {
-                mouseDown = false;
-                canvas.style.cursor = 'grab';
+                var itemWidth = containerWidth / defaultChartDays;
+                var offsetChange = -currentX / itemWidth;
+                
+                chartScroll[chartType].offset = startOffset + offsetChange;
+                
+                slideInner.style.transform = 'translateX(0)';
+                reRenderChart();
             };
             
             // 绑定事件
-            canvas.addEventListener('touchstart', touchstartHandler, { passive: true });
+            canvas.addEventListener('touchstart', touchstartHandler, { passive: false });
             canvas.addEventListener('touchmove', touchmoveHandler, { passive: false });
             canvas.addEventListener('touchend', touchendHandler, { passive: true });
             canvas.addEventListener('mousedown', mousedownHandler);
-            canvas.addEventListener('mousemove', mousemoveHandler);
-            canvas.addEventListener('mouseup', mouseupHandler);
-            canvas.addEventListener('mouseleave', mouseleaveHandler);
+            document.addEventListener('mousemove', mousemoveHandler);
+            document.addEventListener('mouseup', mouseupHandler);
             
             // 保存事件处理器引用
             chartEventHandlers[chartType] = {
@@ -2494,8 +2456,7 @@
                 touchend: touchendHandler,
                 mousedown: mousedownHandler,
                 mousemove: mousemoveHandler,
-                mouseup: mouseupHandler,
-                mouseleave: mouseleaveHandler
+                mouseup: mouseupHandler
             };
         }
         
@@ -2519,7 +2480,7 @@
             }
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedCount');
+            var paginated = getVisibleData(allLabels, 'feedCount');
             var labels = paginated.labels;
             
             if (!labels || labels.length === 0) {
@@ -2567,7 +2528,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedAmount');
+            var paginated = getVisibleData(allLabels, 'feedAmount');
             var labels = paginated.labels;
             
             if (charts.feedAmount) charts.feedAmount.destroy();
@@ -2604,7 +2565,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'sleepDuration');
+            var paginated = getVisibleData(allLabels, 'sleepDuration');
             var labels = paginated.labels;
             
             if (charts.sleepDuration) charts.sleepDuration.destroy();
@@ -2640,7 +2601,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'sleepInterval');
+            var paginated = getVisibleData(allLabels, 'sleepInterval');
             var labels = paginated.labels;
             
             var dayIntervals = labels.map(function(d) {
@@ -2682,7 +2643,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'feedInterval');
+            var paginated = getVisibleData(allLabels, 'feedInterval');
             var labels = paginated.labels;
             
             var dayIntervals = labels.map(function(d) {
@@ -2725,7 +2686,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'weight');
+            var paginated = getVisibleData(allLabels, 'weight');
             var labels = paginated.labels;
             
             if (charts.weight) charts.weight.destroy();
@@ -2778,7 +2739,7 @@
             var allLabels = Object.keys(aggregated).sort();
             
             // 获取分页数据
-            var paginated = getPaginatedData(allLabels, 'poop');
+            var paginated = getVisibleData(allLabels, 'poop');
             var labels = paginated.labels;
             
             if (charts.poop) charts.poop.destroy();
