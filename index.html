@@ -1100,12 +1100,6 @@
                         <label for="birthDateInput">宝宝生日 *</label>
                         <input type="date" id="birthDateInput" required>
                     </div>
-                    <div class="form-group">
-                        <label for="defaultChartDaysInput">图表默认显示天数</label>
-                        <input type="number" id="defaultChartDaysInput" min="3" max="15" value="5" placeholder="建议4-7天">
-                        <small style="color: #999; margin-top: 5px; display: block;">设置图表默认显示的天数（3-15天）。其余数据可通过左右滑动查看。手机建议4天，电脑建议5-7天。</small>
-                    </div>
-
                     <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 16px;">🤖 AI助手配置</h3>
                     <div class="form-group">
                         <label for="llmProvider">LLM服务商</label>
@@ -1264,7 +1258,6 @@
             weight: { offset: 0, totalItems: 0 },
             poop: { offset: 0, totalItems: 0 }
         };
-        var defaultChartDays = 5; // 默认显示天数
 
 
         // 配置相关函数
@@ -1290,7 +1283,6 @@
             var llmApiKey = localStorage.getItem('llmApiKey') || '';
             var llmEndpoint = localStorage.getItem('llmEndpoint') || '';
             var llmModel = localStorage.getItem('llmModel') || '';
-            var chartDays = localStorage.getItem('defaultChartDays') || '5';
             
             // Azure特有字段
             var azureResourceName = localStorage.getItem('azureResourceName') || '';
@@ -1300,7 +1292,6 @@
             
             document.getElementById('babyNameInput').value = babyName;
             document.getElementById('birthDateInput').value = birthDate;
-            document.getElementById('defaultChartDaysInput').value = chartDays;
             document.getElementById('llmProvider').value = llmProvider;
             document.getElementById('llmApiKey').value = llmApiKey;
             document.getElementById('llmEndpoint').value = llmEndpoint;
@@ -1387,11 +1378,6 @@
             try {
                 var babyName = document.getElementById('babyNameInput').value;
                 var birthDate = document.getElementById('birthDateInput').value;
-                var chartDays = parseInt(document.getElementById('defaultChartDaysInput').value);
-                
-                // 验证图表天数范围
-                if (isNaN(chartDays) || chartDays < 3) chartDays = 3;
-                if (chartDays > 15) chartDays = 15;
                 
                 var llmProvider = document.getElementById('llmProvider').value;
                 var llmApiKey = document.getElementById('llmApiKey').value;
@@ -1406,13 +1392,6 @@
                 
                 localStorage.setItem('babyName', babyName);
                 localStorage.setItem('birthDate', birthDate);
-                localStorage.setItem('defaultChartDays', chartDays);
-                
-                // 更新输入框显示正确的值
-                document.getElementById('defaultChartDaysInput').value = chartDays;
-                
-                // 更新全局变量
-                defaultChartDays = chartDays;
                 
                 // 保存LLM配置
                 localStorage.setItem('llmProvider', llmProvider);
@@ -1873,12 +1852,6 @@
                 if (birthDateEl) {
                     birthDateEl.value = savedBirthDate;
                 }
-            }
-            
-            // 加载默认图表显示天数
-            var savedChartDays = localStorage.getItem('defaultChartDays');
-            if (savedChartDays) {
-                defaultChartDays = parseInt(savedChartDays) || 5;
             }
             
             updatePageTitle();
@@ -2388,78 +2361,27 @@
             else if (chartType === 'weight') renderWeightChart(dimension);
             else if (chartType === 'poop') renderPoopChart(dimension);
             
-            // 重置滑动位置到最新数据（最右边，translateX = 0）
+            // 重置滑动位置到最新数据（最右边）
             setTimeout(function() {
                 var canvas = document.getElementById(chartType + 'Chart');
                 if (!canvas) return;
                 var wrapper = canvas.closest('.chart-slide-wrapper');
                 var inner = wrapper ? wrapper.querySelector('.chart-slide-inner') : null;
-                if (inner) {
-                    inner.style.transform = 'translateX(0)';
+                if (inner && wrapper) {
+                    // 计算显示最新数据的位置
+                    var totalW = inner.offsetWidth;
+                    var wrapperW = wrapper.clientWidth;
+                    if (totalW > wrapperW) {
+                        inner.style.transform = 'translateX(' + (wrapperW - totalW) + 'px)';
+                    } else {
+                        inner.style.transform = 'translateX(0)';
+                    }
                 }
             }, 50); // 等待ensureChartWidth完成
         }
         
         // 图表滚动辅助函数（替代分页）
         
-        function getVisibleCountForChart(chartType) {
-            // 优先使用用户设置的天数
-            var userSetting = localStorage.getItem('defaultChartDays');
-            if (userSetting) {
-                var days = parseInt(userSetting);
-                if (!isNaN(days) && days >= 3 && days <= 15) {
-                    return days;
-                }
-            }
-            
-            // 如果没有设置，根据屏幕宽度返回默认值
-            var canvas = document.getElementById(chartType + 'Chart');
-            var wrapper = canvas ? canvas.closest('.chart-slide-wrapper') : null;
-            var width = wrapper ? wrapper.clientWidth : (canvas ? canvas.clientWidth : window.innerWidth);
-            
-            // 根据设备类型返回合适的天数
-            if (width < 600) {
-                // 手机：4天
-                return 4;
-            } else if (width < 900) {
-                // 平板：5天
-                return 5;
-            } else {
-                // 电脑：6天
-                return 6;
-            }
-        }
-
-        function getVisibleData(labels, chartType) {
-            var totalItems = labels.length;
-            var visibleCount = getVisibleCountForChart(chartType);
-            if (!chartScroll[chartType]) {
-                chartScroll[chartType] = { offset: 0, totalItems: totalItems, visible: visibleCount };
-            }
-            var offset = chartScroll[chartType].offset || 0;
-
-            chartScroll[chartType].totalItems = totalItems;
-            chartScroll[chartType].visible = visibleCount;
-
-            var maxOffset = Math.max(0, totalItems - visibleCount);
-            if (offset < 0) offset = 0;
-            if (offset > maxOffset) offset = maxOffset;
-            chartScroll[chartType].offset = offset;
-
-            var endIndex = totalItems - Math.floor(offset);
-            var startIndex = Math.max(0, endIndex - visibleCount);
-
-            var visibleLabels = labels.slice(startIndex, endIndex);
-
-            return {
-                labels: visibleLabels,
-                startIndex: startIndex,
-                endIndex: endIndex,
-                maxOffset: maxOffset,
-                currentOffset: offset,
-                visibleCount: visibleCount
-            };
-        }
 
         
         // 为单个图表绑定滑动事件
@@ -2481,9 +2403,19 @@ function ensureChartWidth(chartType) {
 
     inner.style.width = totalWidth + 'px';
     canvas.style.width = totalWidth + 'px';
+    
+    // 初始位置：显示最新数据（最右边）
+    var wrapperW = wrapper.clientWidth;
+    if (totalWidth > wrapperW) {
+        // 将canvas向左移动，让最右边（最新数据）显示出来
+        inner.style.transform = 'translateX(' + (wrapperW - totalWidth) + 'px)';
+    } else {
+        // 如果总宽度小于等于视口宽度，不需要移动
+        inner.style.transform = 'translateX(0)';
+    }
 }
 
-// 为图表绑定平滑滑动功能
+// 为图表绑定平滑滑动功能（带惯性）
 function bindSwipeToChart(chartType) {
     var canvas = document.getElementById(chartType + 'Chart');
     if (!canvas) return;
@@ -2497,6 +2429,10 @@ function bindSwipeToChart(chartType) {
     var isDown = false;
     var startX = 0;
     var startTranslate = 0;
+    var lastX = 0;
+    var lastTime = 0;
+    var velocityX = 0;
+    var momentumAnimation = null;
 
     function getTranslate() {
         var t = inner.style.transform;
@@ -2514,14 +2450,72 @@ function bindSwipeToChart(chartType) {
         return x;
     }
 
-    function setTranslate(x) {
+    function setTranslate(x, withTransition) {
         x = clamp(x);
+        if (withTransition) {
+            inner.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        } else {
+            inner.style.transition = 'none';
+        }
         inner.style.transform = 'translateX(' + x + 'px)';
     }
 
+    // 停止惯性动画
+    function stopMomentum() {
+        if (momentumAnimation) {
+            cancelAnimationFrame(momentumAnimation);
+            momentumAnimation = null;
+        }
+    }
+
+    // 惯性滑动动画
+    function momentum() {
+        if (Math.abs(velocityX) < 0.5) {
+            // 速度太小，停止
+            stopMomentum();
+            return;
+        }
+
+        var currentX = getTranslate();
+        var newX = currentX + velocityX;
+        
+        // 检查边界
+        var wrapperW = wrapper.clientWidth;
+        var totalW = inner.offsetWidth;
+        var minX = Math.min(0, wrapperW - totalW);
+        var maxX = 0;
+        
+        // 边界弹性效果
+        if (newX > maxX) {
+            newX = maxX;
+            velocityX = 0;
+        } else if (newX < minX) {
+            newX = minX;
+            velocityX = 0;
+        }
+        
+        setTranslate(newX, false);
+        
+        // 减速 - 使用摩擦系数
+        velocityX *= 0.95;
+        
+        // 继续动画
+        if (Math.abs(velocityX) >= 0.5) {
+            momentumAnimation = requestAnimationFrame(momentum);
+        } else {
+            stopMomentum();
+        }
+    }
+
     wrapper.onpointerdown = function (e) {
+        // 停止任何进行中的惯性动画
+        stopMomentum();
+        velocityX = 0;
+        
         isDown = true;
         startX = e.clientX;
+        lastX = e.clientX;
+        lastTime = Date.now();
         startTranslate = getTranslate();
         wrapper.setPointerCapture(e.pointerId);
         canvas.style.cursor = 'grabbing';
@@ -2529,22 +2523,49 @@ function bindSwipeToChart(chartType) {
 
     wrapper.onpointermove = function (e) {
         if (!isDown) return;
-        var dx = e.clientX - startX;
-        setTranslate(startTranslate + dx);
+        
+        var currentTime = Date.now();
+        var currentX = e.clientX;
+        var dx = currentX - startX;
+        
+        // 计算速度（用于惯性）
+        var dt = currentTime - lastTime;
+        if (dt > 0) {
+            velocityX = (currentX - lastX) / dt * 16; // 归一化到60fps
+        }
+        
+        lastX = currentX;
+        lastTime = currentTime;
+        
+        setTranslate(startTranslate + dx, false);
     };
 
     wrapper.onpointerup = wrapper.onpointercancel = function (e) {
+        if (!isDown) return;
+        
         isDown = false;
         canvas.style.cursor = 'grab';
+        
         if (e.pointerId) {
             try { wrapper.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        
+        // 启动惯性滑动
+        if (Math.abs(velocityX) > 1) {
+            // 限制最大速度
+            var maxVelocity = 50;
+            if (velocityX > maxVelocity) velocityX = maxVelocity;
+            if (velocityX < -maxVelocity) velocityX = -maxVelocity;
+            
+            momentum();
         }
     };
 
     window.addEventListener('resize', function () {
+        stopMomentum();
         ensureChartWidth(chartType);
         var cur = getTranslate();
-        setTranslate(cur);
+        setTranslate(cur, false);
     });
 }
 
