@@ -2387,6 +2387,17 @@
             else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
             else if (chartType === 'weight') renderWeightChart(dimension);
             else if (chartType === 'poop') renderPoopChart(dimension);
+            
+            // 重置滑动位置到最新数据（最右边，translateX = 0）
+            setTimeout(function() {
+                var canvas = document.getElementById(chartType + 'Chart');
+                if (!canvas) return;
+                var wrapper = canvas.closest('.chart-slide-wrapper');
+                var inner = wrapper ? wrapper.querySelector('.chart-slide-inner') : null;
+                if (inner) {
+                    inner.style.transform = 'translateX(0)';
+                }
+            }, 50); // 等待ensureChartWidth完成
         }
         
         // 图表滚动辅助函数（替代分页）
