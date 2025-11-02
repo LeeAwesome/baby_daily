@@ -2273,183 +2273,192 @@
         }
         
         // 图表滚动辅助函数（替代分页）
-        
-        function getVisibleCountForChart(chartType) {
-            var canvas = document.getElementById(chartType + 'Chart');
-            var wrapper = canvas ? canvas.closest('.chart-slide-wrapper') : null;
-            var width = wrapper ? wrapper.clientWidth : (canvas ? canvas.clientWidth : window.innerWidth);
-            var minDayWidth = 70; // 每天占多少像素，调这里
-            var autoCount = Math.floor(width / minDayWidth);
-            return Math.max(3, autoCount || 3);
-        }
-
         function getVisibleData(labels, chartType) {
             var totalItems = labels.length;
-            var visibleCount = getVisibleCountForChart(chartType);
-            if (!chartScroll[chartType]) {
-                chartScroll[chartType] = { offset: 0, totalItems: totalItems, visible: visibleCount };
-            }
-            var offset = chartScroll[chartType].offset || 0;
-
+            var visibleCount = defaultChartDays;
+            var offset = chartScroll[chartType].offset;
+            
+            // 存储总数据量
             chartScroll[chartType].totalItems = totalItems;
-            chartScroll[chartType].visible = visibleCount;
-
+            
+            // 限制offset范围：0 到 (totalItems - visibleCount)
             var maxOffset = Math.max(0, totalItems - visibleCount);
             if (offset < 0) offset = 0;
             if (offset > maxOffset) offset = maxOffset;
+            
             chartScroll[chartType].offset = offset;
-
+            
+            // 计算显示范围（从最新数据往前算）
             var endIndex = totalItems - Math.floor(offset);
             var startIndex = Math.max(0, endIndex - visibleCount);
-
+            
+            // 获取可见数据
             var visibleLabels = labels.slice(startIndex, endIndex);
-
+            
             return {
                 labels: visibleLabels,
                 startIndex: startIndex,
                 endIndex: endIndex,
                 maxOffset: maxOffset,
-                currentOffset: offset,
-                visibleCount: visibleCount
+                currentOffset: offset
             };
         }
-
         
         // 为单个图表绑定滑动事件
         var chartEventHandlers = {}; // 存储事件处理器
         
-        
-function bindSwipeToChart(chartType) {
-    var canvas = document.getElementById(chartType + 'Chart');
-    if (!canvas) return;
-
-    var wrapper = canvas.closest('.chart-slide-wrapper');
-    var inner = wrapper ? wrapper.querySelector('.chart-slide-inner') : null;
-    if (!inner || !wrapper) return;
-
-    var isDown = false;
-    var startX = 0;
-    var startOffset = 0;
-    var currentX = 0;
-    var lastUpdateX = 0;
-    var updateThreshold = 0;
-
-    // 辅助函数：根据图表类型重新渲染
-    function reRenderChart() {
-        var chartContainer = canvas.closest('.chart-container');
-        var activeBtn = chartContainer ? chartContainer.querySelector('.time-dimension button.active') : null;
-        var dimension = 'day';
-        if (activeBtn) {
-            var onclickStr = activeBtn.getAttribute('onclick');
-            if (onclickStr && onclickStr.includes("'week'")) dimension = 'week';
-            else if (onclickStr && onclickStr.includes("'month'")) dimension = 'month';
+        function bindSwipeToChart(chartType) {
+            var canvas = document.getElementById(chartType + 'Chart');
+            if (!canvas) return;
+            
+            var slideInner = canvas.closest('.chart-slide-inner');
+            if (!slideInner) return;
+            
+            // 如果已经绑定过，先移除旧的事件
+            if (chartEventHandlers[chartType]) {
+                var handlers = chartEventHandlers[chartType];
+                canvas.removeEventListener('touchstart', handlers.touchstart);
+                canvas.removeEventListener('touchmove', handlers.touchmove);
+                canvas.removeEventListener('touchend', handlers.touchend);
+                canvas.removeEventListener('mousedown', handlers.mousedown);
+                document.removeEventListener('mousemove', handlers.mousemove);
+                document.removeEventListener('mouseup', handlers.mouseup);
+            }
+            
+            var startX = 0;
+            var startY = 0;
+            var currentX = 0;
+            var isDragging = false;
+            var containerWidth = 0;
+            var startOffset = 0; // 记录开始拖拽时的offset
+            
+            // 辅助函数：根据图表类型重新渲染
+            function reRenderChart() {
+                var chartContainer = canvas.closest('.chart-container');
+                var activeBtn = chartContainer.querySelector('.time-dimension button.active');
+                var dimension = 'day';
+                if (activeBtn) {
+                    var onclickStr = activeBtn.getAttribute('onclick');
+                    if (onclickStr.includes("'week'")) dimension = 'week';
+                    else if (onclickStr.includes("'month'")) dimension = 'month';
+                }
+                
+                if (chartType === 'feedCount') renderFeedCountChart(dimension);
+                else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
+                else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
+                else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
+                else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
+                else if (chartType === 'weight') renderWeightChart(dimension);
+                else if (chartType === 'poop') renderPoopChart(dimension);
+            }
+            
+            // 触摸开始
+            var touchstartHandler = function(e) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                currentX = 0;
+                isDragging = true;
+                containerWidth = slideInner.offsetWidth;
+                startOffset = chartScroll[chartType].offset;
+                
+                slideInner.style.transform = 'translateX(0)';
+            };
+            
+            // 触摸移动 - 实时跟随手指
+            var touchmoveHandler = function(e) {
+                if (!isDragging) return;
+                
+                var moveX = e.touches[0].clientX - startX;
+                var moveY = e.touches[0].clientY - startY;
+                
+                // 判断是否为水平滑动
+                if (Math.abs(moveX) > Math.abs(moveY)) {
+                    e.preventDefault();
+                    currentX = moveX;
+                    
+                    // 实时更新位置
+                    slideInner.style.transform = 'translateX(' + moveX + 'px)';
+                }
+            };
+            
+            // 触摸结束 - 更新offset并重新渲染
+            var touchendHandler = function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                // 计算滚动的数据量（基于移动距离）
+                var itemWidth = containerWidth / defaultChartDays; // 每个数据点的宽度
+                var offsetChange = -currentX / itemWidth; // 负号是因为向右滑动应该查看更早的数据
+                
+                // 更新offset
+                chartScroll[chartType].offset = startOffset + offsetChange;
+                
+                // 重新渲染
+                slideInner.style.transform = 'translateX(0)';
+                reRenderChart();
+            };
+            
+            // 鼠标事件处理器
+            var mousedownHandler = function(e) {
+                startX = e.clientX;
+                startY = e.clientY;
+                currentX = 0;
+                isDragging = true;
+                containerWidth = slideInner.offsetWidth;
+                startOffset = chartScroll[chartType].offset;
+                
+                slideInner.style.transform = 'translateX(0)';
+                canvas.style.cursor = 'grabbing';
+                
+                e.preventDefault();
+            };
+            
+            var mousemoveHandler = function(e) {
+                if (!isDragging) return;
+                
+                var moveX = e.clientX - startX;
+                var moveY = e.clientY - startY;
+                
+                if (Math.abs(moveX) > Math.abs(moveY)) {
+                    e.preventDefault();
+                    currentX = moveX;
+                    
+                    slideInner.style.transform = 'translateX(' + moveX + 'px)';
+                }
+            };
+            
+            var mouseupHandler = function(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                canvas.style.cursor = 'grab';
+                
+                var itemWidth = containerWidth / defaultChartDays;
+                var offsetChange = -currentX / itemWidth;
+                
+                chartScroll[chartType].offset = startOffset + offsetChange;
+                
+                slideInner.style.transform = 'translateX(0)';
+                reRenderChart();
+            };
+            
+            // 绑定事件
+            canvas.addEventListener('touchstart', touchstartHandler, { passive: false });
+            canvas.addEventListener('touchmove', touchmoveHandler, { passive: false });
+            canvas.addEventListener('touchend', touchendHandler, { passive: true });
+            canvas.addEventListener('mousedown', mousedownHandler);
+            document.addEventListener('mousemove', mousemoveHandler);
+            document.addEventListener('mouseup', mouseupHandler);
+            
+            // 保存事件处理器引用
+            chartEventHandlers[chartType] = {
+                touchstart: touchstartHandler,
+                touchmove: touchmoveHandler,
+                touchend: touchendHandler,
+                mousedown: mousedownHandler,
+                mousemove: mousemoveHandler,
+                mouseup: mouseupHandler
+            };
         }
-        
-        if (chartType === 'feedCount') renderFeedCountChart(dimension);
-        else if (chartType === 'feedAmount') renderFeedAmountChart(dimension);
-        else if (chartType === 'sleepDuration') renderSleepDurationChart(dimension);
-        else if (chartType === 'sleepInterval') renderSleepIntervalChart(dimension);
-        else if (chartType === 'feedInterval') renderFeedIntervalChart(dimension);
-        else if (chartType === 'weight') renderWeightChart(dimension);
-        else if (chartType === 'poop') renderPoopChart(dimension);
-    }
-
-    wrapper.onpointerdown = function (e) {
-        isDown = true;
-        startX = e.clientX;
-        currentX = 0;
-        lastUpdateX = 0;
-        
-        var wrapperW = wrapper.clientWidth;
-        var visibleCount = (chartScroll[chartType] && chartScroll[chartType].visible) || getVisibleCountForChart(chartType);
-        updateThreshold = wrapperW / visibleCount * 0.5; // 移动半个数据点触发更新
-        
-        // 保存开始时的offset
-        if (chartScroll[chartType]) {
-            startOffset = chartScroll[chartType].offset || 0;
-        } else {
-            startOffset = 0;
-        }
-        
-        // 移除过渡效果
-        inner.style.transition = 'none';
-        inner.style.transform = 'translateX(0)';
-        
-        wrapper.setPointerCapture(e.pointerId);
-        canvas.style.cursor = 'grabbing';
-    };
-
-    wrapper.onpointermove = function (e) {
-        if (!isDown) return;
-        
-        var moveX = e.clientX - startX;
-        currentX = moveX;
-        
-        // 实时更新位置
-        inner.style.transform = 'translateX(' + moveX + 'px)';
-        
-        // 检查是否需要更新数据
-        var deltaFromLastUpdate = moveX - lastUpdateX;
-        if (Math.abs(deltaFromLastUpdate) > updateThreshold && chartScroll[chartType]) {
-            var wrapperW = wrapper.clientWidth;
-            var visibleCount = chartScroll[chartType].visible || getVisibleCountForChart(chartType);
-            var itemWidth = wrapperW / visibleCount;
-            
-            // 计算新的offset
-            chartScroll[chartType].offset = startOffset + (-currentX / itemWidth);
-            
-            // 限制范围
-            var maxOffset = Math.max(0, chartScroll[chartType].totalItems - visibleCount);
-            if (chartScroll[chartType].offset < 0) chartScroll[chartType].offset = 0;
-            if (chartScroll[chartType].offset > maxOffset) chartScroll[chartType].offset = maxOffset;
-            
-            // 更新数据
-            reRenderChart();
-            
-            // 重置
-            lastUpdateX = moveX;
-            startOffset = chartScroll[chartType].offset;
-            inner.style.transform = 'translateX(' + moveX + 'px)';
-        }
-    };
-
-    wrapper.onpointerup = wrapper.onpointercancel = function (e) {
-        if (!isDown) return;
-        isDown = false;
-        canvas.style.cursor = 'grab';
-        
-        if (e.pointerId) {
-            try { wrapper.releasePointerCapture(e.pointerId); } catch (_) {}
-        }
-        
-        // 计算最终offset
-        if (chartScroll[chartType]) {
-            var wrapperW = wrapper.clientWidth;
-            var visibleCount = chartScroll[chartType].visible || getVisibleCountForChart(chartType);
-            var itemWidth = wrapperW / visibleCount;
-            var totalOffsetChange = -currentX / itemWidth;
-            var finalOffset = startOffset + totalOffsetChange;
-            
-            // 限制范围
-            var maxOffset = Math.max(0, chartScroll[chartType].totalItems - visibleCount);
-            if (finalOffset < 0) finalOffset = 0;
-            if (finalOffset > maxOffset) finalOffset = maxOffset;
-            
-            chartScroll[chartType].offset = finalOffset;
-        }
-        
-        // 添加过渡效果并重置位置
-        inner.style.transition = 'transform 0.2s ease-out';
-        inner.style.transform = 'translateX(0)';
-        
-        // 最后重新渲染
-        setTimeout(function() {
-            reRenderChart();
-            inner.style.transition = 'none';
-        }, 50);
-    };
-}
-
         
         // 初始化触摸滑动支持
         function initChartSwipe() {
@@ -2512,6 +2521,7 @@ function bindSwipeToChart(chartType) {
             bindSwipeToChart('feedCount');
         }
 
+        // 2. 每日喂奶量（母乳和奶粉）
         // 2. 每日喂奶量（母乳和奶粉）
         function renderFeedAmountChart(dimension) {
             var aggregated = aggregateByDimension(allAnalyzedData, dimension);
