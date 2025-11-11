@@ -374,7 +374,18 @@
             text-align: center;
             color: #fff;
             margin-bottom: 15px;
-            font-size: clamp(13px, 3.5vw, 16px)
+            font-size: clamp(13px, 3.5vw, 16px);
+            transition: margin-bottom 0.3s ease;
+        }
+
+        /* 事件视图时，减少babyAge的底部间距 */
+        body.event-view-active #babyAge {
+            margin-bottom: 1px;
+        }
+
+        /* 事件视图时，调整容器顶部间距 */
+        body.event-view-active .view-container {
+            margin-top: -55px;
         }
 
         .file-input-container {
@@ -862,6 +873,501 @@
             padding-bottom: 75px;
             min-height: 100vh
         }
+
+        /* ========== 事件视图样式 ========== */
+        .view-container {
+            max-width: 100%;
+            height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+            margin-top: 5;
+        }
+
+        .event-controls {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .event-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: nowrap;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .event-legend::-webkit-scrollbar {
+            display: none;
+        }
+
+        .event-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            flex-shrink: 0;
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .event-legend-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .event-legend-item.disabled {
+            opacity: 0.3;
+        }
+
+        .event-legend-item.disabled span {
+            text-decoration: line-through;
+        }
+
+        .event-legend-color {
+            width: 16px;
+            height: 12px;
+            border-radius: 2px;
+            border-left: 3px solid rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .event-card {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            padding: 20px;
+            min-width: 280px;
+            max-width: 320px;
+            z-index: 1000;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+        }
+
+        .event-card.show {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .event-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .event-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            flex: 1;
+        }
+
+        .event-card-close {
+            background: #f5f5f5;
+            border: none;
+            color: #666;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        .event-card-close:hover {
+            background: #e0e0e0;
+        }
+
+        .event-card-item {
+            margin-bottom: 12px;
+        }
+
+        .event-card-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .event-card-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-card-value {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .gantt-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .gantt-fixed-column {
+            width: 70px;
+            min-width: 70px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            z-index: 100;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.08);
+        }
+
+        .gantt-header-date {
+            height: 40px;
+            min-height: 40px;
+            padding: 8px 4px;
+            text-align: center;
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .gantt-dates-body {
+            flex: 1;
+            overflow: hidden;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .gantt-dates-body::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gantt-scroll-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+            position: relative;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .gantt-scroll-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gantt-header-hours {
+            display: flex;
+            width: 100%;
+            min-width: 1440px;
+            height: 40px;
+            min-height: 40px;
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            font-size: 10px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .gantt-hour-cell {
+            flex: 1;
+            min-width: 60px;
+            padding: 8px 2px;
+            text-align: center;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .gantt-content {
+            flex: 1;
+            width: 100%;
+            min-width: 1440px;
+            overflow: visible;
+            touch-action: pan-x pan-y;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .gantt-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gantt-date-label {
+            height: 50px;
+            min-height: 50px;
+            padding: 8px 4px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+
+        .gantt-date-label:hover {
+            background: #f8f9ff;
+        }
+
+        .gantt-date-label .date-main {
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .gantt-date-label .date-sub {
+            font-size: 10px;
+            color: #666;
+            margin-top: 1px;
+        }
+
+        .gantt-row {
+            display: flex;
+            height: 50px;
+            min-height: 50px;
+            width: 100%;
+            min-width: 1440px;
+            border-bottom: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        .gantt-row:hover {
+            background: #f8f9ff;
+        }
+
+        .gantt-date-label.today {
+            background: #fff8e1;
+            border-left: 4px solid #ffa000;
+        }
+
+        .gantt-date-label.today:hover {
+            background: #ffecb3;
+        }
+
+        .gantt-row.today {
+            background: #fff8e1;
+        }
+
+        .gantt-event {
+            position: absolute;
+            height: 24px;
+            border-radius: 3px;
+            padding: 3px 6px;
+            font-size: 10px;
+            line-height: 1.4;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .gantt-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+            z-index: 40;
+            white-space: normal;
+        }
+
+        .gantt-event:active {
+            transform: translateY(0);
+        }
+
+        .event-sleep {
+            background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+            color: white;
+            border-left: 4px solid #1976d2;
+        }
+
+        .event-feed-milk {
+            background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);
+            color: white;
+            border-left: 4px solid #f57c00;
+        }
+
+        .event-feed-formula {
+            background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+            color: white;
+            border-left: 4px solid #c2185b;
+        }
+
+        .event-food {
+            background: linear-gradient(135deg, #aed581 0%, #9ccc65 100%);
+            color: white;
+            border-left: 4px solid #689f38;
+        }
+
+        .event-poop {
+            background: linear-gradient(135deg, #bcaaa4 0%, #a1887f 100%);
+            color: white;
+            border-left: 4px solid #795548;
+        }
+
+        .event-weight {
+            background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+            color: white;
+            border-left: 4px solid #388e3c;
+        }
+
+        .event-point {
+            width: 28px !important;
+            height: 28px !important;
+            min-width: 28px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+            position: absolute;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            z-index: 20;
+            border: none !important;
+        }
+
+        .event-point:hover {
+            transform: translateX(-50%) scale(1.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 50;
+        }
+
+        .event-point::after {
+            content: attr(data-icon);
+            font-size: 13px;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .event-point.event-feed-milk {
+            background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);
+        }
+
+        .event-point.event-feed-formula {
+            background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+        }
+
+        .event-point.event-food {
+            background: linear-gradient(135deg, #aed581 0%, #9ccc65 100%);
+        }
+
+        .event-point.event-poop {
+            background: linear-gradient(135deg, #bcaaa4 0%, #a1887f 100%);
+        }
+
+        .event-point.event-weight {
+            background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+        }
+
+        .gantt-hour-cell.current-hour {
+            background: rgba(255, 68, 68, 0.15);
+            position: relative;
+        }
+
+        .gantt-hour-cell.current-hour::after {
+            content: '●';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff4444;
+            font-size: 8px;
+        }
+
+        .gantt-hour-cell.future-hour {
+            opacity: 0.4;
+        }
+
+        @media (max-width: 768px) {
+            .gantt-fixed-column {
+                width: 60px;
+                min-width: 60px;
+            }
+
+            .gantt-header-date {
+                font-size: 10px;
+                padding: 6px 2px;
+            }
+
+            .gantt-date-label {
+                padding: 6px 2px;
+            }
+
+            .gantt-date-label .date-main {
+                font-size: 12px;
+            }
+
+            .gantt-date-label .date-sub {
+                font-size: 9px;
+            }
+
+            .event-legend {
+                font-size: 10px;
+                gap: 8px;
+            }
+
+            .event-legend-item {
+                gap: 3px;
+                padding: 3px 4px;
+            }
+
+            .event-legend-color {
+                width: 14px;
+                height: 10px;
+            }
+
+            .event-point {
+                width: 24px !important;
+                height: 24px !important;
+                min-width: 24px;
+            }
+
+            .event-point::after {
+                font-size: 12px;
+            }
+
+            .event-card {
+                min-width: 240px;
+                max-width: 280px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -882,7 +1388,7 @@
                 </div>
                 <label class="file-label" for="csvFile">
                     📂 选择CSV文件
-                    <input type="file" id="csvFile" accept=".csv">
+                    <input type="file" id="csvFile" accept=".csv" onchange="handleCSVUpload(event)">
                 </label>
                 <div class="status" id="status">等待上传CSV文件</div>
             </div>
@@ -1618,6 +2124,13 @@
                 .then(function (text) {
                     var csv = parseCSV(text);
                     if (csv.length > 0) {
+                        // 保存原始数据到localStorage供事件视图使用
+                        try {
+                            localStorage.setItem('baby_all_raw_rows', JSON.stringify(csv));
+                        } catch (e) {
+                            console.warn('无法保存数据到localStorage', e);
+                        }
+                        
                         allAnalyzedData = analyzeData(csv);
                         renderCharts(allAnalyzedData);
                         showSuccessMessage('✅ 数据已刷新！');
@@ -2056,6 +2569,57 @@
             var displayName = (babyName && babyName.trim() !== '') ? babyName : '宝宝';
             
             document.getElementById('babyAge').textContent = displayName + '已经 ' + months + ' 个月 ' + days + ' 天了 🎉';
+        }
+
+        // 处理CSV文件上传
+        function handleCSVUpload(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('status').textContent = '⏳ 正在读取文件...';
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var text = e.target.result;
+                    var csv = parseCSV(text);
+                    
+                    if (csv.length === 0) {
+                        document.getElementById('status').textContent = '❌ 文件格式错误或无数据';
+                        return;
+                    }
+                    
+                    // 保存原始数据到localStorage供事件视图使用
+                    try {
+                        localStorage.setItem('baby_all_raw_rows', JSON.stringify(csv));
+                    } catch (err) {
+                        console.warn('无法保存数据到localStorage', err);
+                    }
+                    
+                    // 分析数据并渲染图表
+                    allAnalyzedData = analyzeData(csv);
+                    renderCharts(allAnalyzedData);
+                    
+                    document.getElementById('status').textContent = '✅ 文件加载成功！共 ' + csv.length + ' 条记录';
+                    
+                    // 显示数据容器
+                    var dataContainer = document.getElementById('dataContainer');
+                    if (dataContainer) {
+                        dataContainer.classList.remove('hidden');
+                    }
+                    
+                    showSuccessMessage('✅ CSV文件加载成功！');
+                } catch (error) {
+                    console.error('解析错误:', error);
+                    document.getElementById('status').textContent = '❌ 文件解析失败: ' + error.message;
+                }
+            };
+            
+            reader.onerror = function() {
+                document.getElementById('status').textContent = '❌ 文件读取失败';
+            };
+            
+            reader.readAsText(file, 'UTF-8');
         }
 
         function parseCSV(text) {
@@ -3188,6 +3752,13 @@ function bindSwipeToChart(chartType) {
                 .then(function (text) {
                     var csv = parseCSV(text);
                     if (csv.length > 0) {
+                        // 保存原始数据到localStorage供事件视图使用
+                        try {
+                            localStorage.setItem('baby_all_raw_rows', JSON.stringify(csv));
+                        } catch (e) {
+                            console.warn('无法保存数据到localStorage', e);
+                        }
+                        
                         allAnalyzedData = analyzeData(csv);
                         renderCharts(allAnalyzedData);
                     }
@@ -3206,6 +3777,680 @@ function bindSwipeToChart(chartType) {
     </div>
 
     <script>
+        // ========== 视图切换功能 ==========
+        function switchView(viewName) {
+            var analysisView = document.getElementById('dataContainer');
+            var eventView = document.getElementById('eventView');
+            var navItems = document.querySelectorAll('.nav-item');
+            var babyAge = document.getElementById('babyAge');
+            var fileContainer = document.getElementById('fileContainer');
+            
+            if (viewName === 'event') {
+                analysisView.style.display = 'none';
+                eventView.style.display = 'flex';
+                navItems[0].classList.add('active');
+                navItems[1].classList.remove('active');
+                
+                // 添加事件视图标识class
+                document.body.classList.add('event-view-active');
+                if (fileContainer) fileContainer.style.display = 'none';
+                
+                // 初始化事件视图
+                initEventView();
+            } else {
+                analysisView.style.display = 'block';
+                eventView.style.display = 'none';
+                navItems[0].classList.remove('active');
+                navItems[1].classList.add('active');
+                
+                // 移除事件视图标识class
+                document.body.classList.remove('event-view-active');
+                if (fileContainer) fileContainer.style.display = 'block';
+            }
+        }
+
+        // ========== 事件视图相关变量 ==========
+        var eventAllData = [];
+        var eventProcessedEvents = [];
+        var eventTypeFilters = {
+            'sleep': true,
+            'feed-milk': true,
+            'feed-formula': true,
+            'food': true,
+            'poop': true,
+            'weight': true
+        };
+
+        // ========== 事件视图初始化 ==========
+        function initEventView() {
+            // 从localStorage读取数据
+            try {
+                var stored = localStorage.getItem('baby_all_raw_rows');
+                if (stored) {
+                    var parsed = JSON.parse(stored);
+                    if (parsed && parsed.length > 0) {
+                        eventAllData = parsed;
+                        eventProcessedEvents = processEventsForGantt(eventAllData);
+                        if (eventProcessedEvents.length > 0) {
+                            renderEventHeader(false);
+                            renderAllEventData();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('读取事件数据失败', err);
+            }
+        }
+
+        // 渲染所有事件数据
+        function renderAllEventData() {
+            if (eventProcessedEvents.length === 0) return;
+            
+            // 获取所有日期
+            var allDates = {};
+            eventProcessedEvents.forEach(function(evt) {
+                allDates[evt.date] = true;
+            });
+            
+            var dateList = Object.keys(allDates).sort();
+            if (dateList.length === 0) return;
+            
+            // 使用第一个和最后一个日期作为范围
+            var startDate = new Date(dateList[0] + 'T00:00:00');
+            var endDate = new Date(dateList[dateList.length - 1] + 'T00:00:00');
+            
+            renderEventGantt(startDate, endDate);
+        }
+
+        // ========== 事件处理函数 ==========
+        function processEventsForGantt(data) {
+            var events = [];
+            var sleepPairs = {};
+            
+            data.forEach(function(row) {
+                if (!row || !row.timestamp) return;
+                
+                var date = new Date(row.timestamp);
+                var rawDateStr = row.timestamp.split(' ')[0];
+                var dateParts = rawDateStr.split('-');
+                var dateStr;
+                if (dateParts.length === 3) {
+                    var year = dateParts[0];
+                    var month = dateParts[1].padStart(2, '0');
+                    var day = dateParts[2].padStart(2, '0');
+                    dateStr = year + '-' + month + '-' + day;
+                } else {
+                    dateStr = rawDateStr;
+                }
+                
+                var hour = date.getHours();
+                var minute = date.getMinutes();
+                var timeInMinutes = hour * 60 + minute;
+                
+                if (row.event_type === '睡觉') {
+                    if (row.subtype === '开始') {
+                        var key = row.pair_key || row.timestamp;
+                        sleepPairs[key] = {
+                            date: dateStr,
+                            startTime: timeInMinutes,
+                            startTimestamp: row.timestamp,
+                            who: row.who
+                        };
+                    } else if (row.subtype === '结束' && row.pair_key) {
+                        var startEvent = sleepPairs[row.pair_key];
+                        if (startEvent) {
+                            var endTimeInMinutes = timeInMinutes;
+                            
+                            if (dateStr !== startEvent.date) {
+                                events.push({
+                                    date: startEvent.date,
+                                    type: 'sleep',
+                                    startTime: startEvent.startTime,
+                                    endTime: 24 * 60,
+                                    duration: 24 * 60 - startEvent.startTime,
+                                    text: '😴 睡觉',
+                                    tooltip: startEvent.startTimestamp + ' 开始',
+                                    who: startEvent.who
+                                });
+                                
+                                events.push({
+                                    date: dateStr,
+                                    type: 'sleep',
+                                    startTime: 0,
+                                    endTime: endTimeInMinutes,
+                                    duration: endTimeInMinutes,
+                                    text: '😴 睡觉',
+                                    tooltip: row.timestamp + ' 醒来',
+                                    who: row.who
+                                });
+                            } else {
+                                events.push({
+                                    date: dateStr,
+                                    type: 'sleep',
+                                    startTime: startEvent.startTime,
+                                    endTime: endTimeInMinutes,
+                                    duration: endTimeInMinutes - startEvent.startTime,
+                                    text: '😴 睡觉 ' + formatEventDuration(endTimeInMinutes - startEvent.startTime),
+                                    tooltip: startEvent.startTimestamp + ' - ' + row.timestamp,
+                                    who: startEvent.who
+                                });
+                            }
+                            
+                            delete sleepPairs[row.pair_key];
+                        }
+                    }
+                } else if (row.event_type === '喂奶') {
+                    var eventText = '';
+                    var eventType = '';
+                    var val = parseFloat(row.value) || 0;
+                    
+                    if (row.subtype === '母乳') {
+                        eventText = '🤱 母乳';
+                        if (val > 0) eventText += ' ' + val + row.unit;
+                        eventType = 'feed-milk';
+                    } else if (row.subtype === '奶粉') {
+                        eventText = '🍼 奶粉';
+                        if (val > 0) eventText += ' ' + val + row.unit;
+                        eventType = 'feed-formula';
+                    }
+                    
+                    events.push({
+                        date: dateStr,
+                        type: eventType,
+                        startTime: timeInMinutes,
+                        endTime: timeInMinutes,
+                        duration: 0,
+                        text: eventText,
+                        tooltip: row.timestamp + (row.notes ? '\n' + row.notes : ''),
+                        who: row.who
+                    });
+                } else if (row.event_type === '辅食') {
+                    var val = parseFloat(row.value) || 0;
+                    var foodText = '🥄 ' + (row.subtype || '辅食');
+                    if (val > 0) foodText += ' ' + val + row.unit;
+                    
+                    events.push({
+                        date: dateStr,
+                        type: 'food',
+                        startTime: timeInMinutes,
+                        endTime: timeInMinutes,
+                        duration: 0,
+                        text: foodText,
+                        tooltip: row.timestamp + '\n' + (row.notes || row.subtype || ''),
+                        who: row.who
+                    });
+                } else if (row.event_type === '换尿布') {
+                    events.push({
+                        date: dateStr,
+                        type: 'poop',
+                        startTime: timeInMinutes,
+                        endTime: timeInMinutes,
+                        duration: 0,
+                        text: '💩 ' + row.subtype,
+                        tooltip: row.timestamp,
+                        who: row.who
+                    });
+                } else if (row.event_type === '体重') {
+                    var val = parseFloat(row.value) || 0;
+                    events.push({
+                        date: dateStr,
+                        type: 'weight',
+                        startTime: timeInMinutes,
+                        endTime: timeInMinutes,
+                        duration: 0,
+                        text: '⚖️ ' + val + row.unit,
+                        tooltip: row.timestamp,
+                        who: row.who
+                    });
+                }
+            });
+            
+            return events;
+        }
+
+        function formatEventDuration(minutes) {
+            if (minutes < 60) {
+                return minutes + '分';
+            }
+            var hours = Math.floor(minutes / 60);
+            var mins = minutes % 60;
+            if (mins === 0) {
+                return hours + '小时';
+            }
+            return hours + '小时' + mins + '分';
+        }
+
+        function formatEventDate(date) {
+            var year = date.getFullYear();
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
+        }
+
+        function getEventWeekday(date) {
+            var days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            return days[date.getDay()];
+        }
+
+        function generateEventDateRange(startDate, endDate) {
+            var dates = [];
+            var current = new Date(startDate);
+            var end = new Date(endDate);
+            
+            while (current <= end) {
+                dates.push(new Date(current));
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return dates;
+        }
+
+        function renderEventHeader(markCurrentTime) {
+            var headerHours = document.getElementById('ganttHeaderHours');
+            if (!headerHours) return;
+            
+            headerHours.innerHTML = '';
+            var now = new Date();
+            var currentHour = now.getHours();
+            
+            for (var hour = 0; hour < 24; hour++) {
+                var cell = document.createElement('div');
+                cell.className = 'gantt-hour-cell';
+                
+                if (markCurrentTime) {
+                    if (hour === currentHour) {
+                        cell.classList.add('current-hour');
+                    }
+                    if (hour > currentHour) {
+                        cell.classList.add('future-hour');
+                    }
+                }
+                
+                cell.textContent = hour + ':00';
+                headerHours.appendChild(cell);
+            }
+        }
+
+        function renderEventGantt(startDate, endDate) {
+            var datesBody = document.getElementById('ganttDatesBody');
+            var ganttContent = document.getElementById('ganttContent');
+            
+            if (!datesBody || !ganttContent) return;
+            
+            datesBody.innerHTML = '';
+            ganttContent.innerHTML = '';
+            
+            var dates = generateEventDateRange(startDate, endDate);
+            dates.reverse();
+            
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            var todayStr = formatEventDate(today);
+            
+            var includesToday = dates.some(function(date) {
+                return formatEventDate(date) === todayStr;
+            });
+            
+            renderEventHeader(includesToday);
+            
+            dates.forEach(function(date) {
+                var dateStr = formatEventDate(date);
+                var isToday = dateStr === todayStr;
+                
+                var dateLabel = document.createElement('div');
+                dateLabel.className = 'gantt-date-label' + (isToday ? ' today' : '');
+                
+                var dateMain = document.createElement('div');
+                dateMain.className = 'date-main';
+                dateMain.textContent = (date.getMonth() + 1) + '/' + date.getDate();
+                
+                var dateSub = document.createElement('div');
+                dateSub.className = 'date-sub';
+                dateSub.textContent = getEventWeekday(date);
+                
+                dateLabel.appendChild(dateMain);
+                dateLabel.appendChild(dateSub);
+                datesBody.appendChild(dateLabel);
+                
+                var row = document.createElement('div');
+                row.className = 'gantt-row' + (isToday ? ' today' : '');
+                
+                var dayEvents = eventProcessedEvents.filter(function(e) {
+                    return e.date === dateStr && eventTypeFilters[e.type];
+                });
+                
+                dayEvents.sort(function(a, b) {
+                    return a.startTime - b.startTime;
+                });
+                
+                var tracks = [];
+                var pointEventTracks = {};
+                
+                dayEvents.forEach(function(evt) {
+                    var trackIndex = -1;
+                    
+                    if (evt.duration > 0) {
+                        for (var i = 0; i < tracks.length; i++) {
+                            if (tracks[i] <= evt.startTime) {
+                                trackIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (trackIndex === -1) {
+                            trackIndex = tracks.length;
+                            tracks.push(0);
+                        }
+                        
+                        tracks[trackIndex] = evt.endTime;
+                    } else {
+                        var nearbyEvents = dayEvents.filter(function(e) {
+                            return e.duration === 0 && 
+                                   Math.abs(e.startTime - evt.startTime) < 5 && 
+                                   e !== evt &&
+                                   pointEventTracks[e.startTime] !== undefined;
+                        });
+                        
+                        if (nearbyEvents.length > 0) {
+                            var usedTracks = nearbyEvents.map(function(e) {
+                                return pointEventTracks[e.startTime];
+                            });
+                            trackIndex = 0;
+                            while (usedTracks.indexOf(trackIndex) !== -1) {
+                                trackIndex++;
+                            }
+                        } else {
+                            trackIndex = 0;
+                        }
+                        
+                        pointEventTracks[evt.startTime] = trackIndex;
+                        
+                        while (tracks.length <= trackIndex) {
+                            tracks.push(0);
+                        }
+                    }
+                    
+                    var eventDiv = document.createElement('div');
+                    eventDiv.className = 'gantt-event event-' + evt.type;
+                    
+                    var leftPercent = (evt.startTime / (24 * 60)) * 100;
+                    
+                    if (evt.duration > 0) {
+                        var widthPercent = (evt.duration / (24 * 60)) * 100;
+                        eventDiv.style.left = leftPercent + '%';
+                        eventDiv.style.width = widthPercent + '%';
+                        eventDiv.textContent = evt.text;
+                        if (evt.who && evt.who.trim()) {
+                            eventDiv.textContent += ' [' + evt.who.trim() + ']';
+                        }
+                    } else {
+                        eventDiv.style.left = leftPercent + '%';
+                        eventDiv.style.transform = 'translateX(-50%)';
+                        eventDiv.classList.add('event-point');
+                        
+                        var icon = '';
+                        var textMatch = evt.text.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|[\uD83C-\uD83E][\uDC00-\uDFFF])/);
+                        if (textMatch) {
+                            icon = textMatch[0];
+                        } else {
+                            var iconMap = {
+                                'feed-milk': '🤱',
+                                'feed-formula': '🍼',
+                                'food': '🥄',
+                                'poop': '💩',
+                                'weight': '⚖️'
+                            };
+                            icon = iconMap[evt.type] || '📌';
+                        }
+                        eventDiv.setAttribute('data-icon', icon);
+                    }
+                    
+                    var top = 3 + trackIndex * 28;
+                    eventDiv.style.top = top + 'px';
+                    eventDiv.title = evt.tooltip || evt.text;
+                    
+                    eventDiv.onclick = function(e) {
+                        e.stopPropagation();
+                        showEventCard(evt, e);
+                    };
+                    
+                    row.appendChild(eventDiv);
+                });
+                
+                if (tracks.length > 0) {
+                    var rowHeight = Math.max(50, tracks.length * 28 + 10);
+                    row.style.height = rowHeight + 'px';
+                    row.style.minHeight = rowHeight + 'px';
+                    dateLabel.style.height = rowHeight + 'px';
+                    dateLabel.style.minHeight = rowHeight + 'px';
+                }
+                
+                ganttContent.appendChild(row);
+            });
+            
+            syncEventScroll();
+            scrollToCurrentTime();
+        }
+
+        function syncEventScroll() {
+            // 滚动同步已在 initEventTouchDrag 中处理
+            // 这个函数保留为空，以防其他地方调用
+        }
+
+        function scrollToCurrentTime() {
+            var ganttScrollArea = document.getElementById('ganttScrollArea');
+            if (!ganttScrollArea) return;
+            
+            var now = new Date();
+            var currentHour = now.getHours();
+            var currentMinute = now.getMinutes();
+            var timePercent = (currentHour * 60 + currentMinute) / (24 * 60);
+            var contentWidth = ganttScrollArea.scrollWidth;
+            var viewportWidth = ganttScrollArea.clientWidth;
+            var timePosition = contentWidth * timePercent;
+            var scrollPosition;
+            
+            if (viewportWidth < 768) {
+                scrollPosition = timePosition - (viewportWidth / 3);
+            } else if (viewportWidth < 1200) {
+                scrollPosition = timePosition - (viewportWidth * 0.4);
+            } else {
+                scrollPosition = timePosition - (viewportWidth / 2);
+            }
+            
+            if (scrollPosition < 0) scrollPosition = 0;
+            var maxScroll = contentWidth - viewportWidth;
+            if (scrollPosition > maxScroll) scrollPosition = maxScroll;
+            
+            setTimeout(function() {
+                ganttScrollArea.scrollLeft = scrollPosition;
+                ganttScrollArea.scrollTop = 0;
+            }, 100);
+        }
+
+        function initEventTouchDrag() {
+            var ganttScrollArea = document.getElementById('ganttScrollArea');
+            var datesBody = document.getElementById('ganttDatesBody');
+            
+            if (!ganttScrollArea || !datesBody) return;
+
+            // 监听滚动区域的滚动事件，同步到日期列
+            ganttScrollArea.addEventListener('scroll', function() {
+                datesBody.scrollTop = ganttScrollArea.scrollTop;
+            });
+
+            // 设置光标样式
+            ganttScrollArea.style.cursor = 'grab';
+            
+            var isDown = false;
+            var startX = 0;
+            var startY = 0;
+            var scrollLeft = 0;
+            var scrollTop = 0;
+
+            ganttScrollArea.onpointerdown = function(e) {
+                if (e.target.closest('.gantt-event')) {
+                    return;
+                }
+
+                isDown = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                scrollLeft = ganttScrollArea.scrollLeft;
+                scrollTop = ganttScrollArea.scrollTop;
+
+                ganttScrollArea.setPointerCapture(e.pointerId);
+                ganttScrollArea.style.cursor = 'grabbing';
+            };
+
+            ganttScrollArea.onpointermove = function(e) {
+                if (!isDown) return;
+
+                var dx = e.clientX - startX;
+                var dy = e.clientY - startY;
+
+                ganttScrollArea.scrollLeft = scrollLeft - dx;
+                ganttScrollArea.scrollTop = scrollTop - dy;
+            };
+
+            ganttScrollArea.onpointerup = ganttScrollArea.onpointercancel = function(e) {
+                if (!isDown) return;
+
+                isDown = false;
+                ganttScrollArea.style.cursor = 'grab';
+
+                try {
+                    ganttScrollArea.releasePointerCapture(e.pointerId);
+                } catch(err) {}
+            };
+        }
+
+        function toggleEventType(type, element) {
+            eventTypeFilters[type] = !eventTypeFilters[type];
+            
+            if (eventTypeFilters[type]) {
+                element.classList.remove('disabled');
+            } else {
+                element.classList.add('disabled');
+            }
+            
+            // 重新渲染所有数据
+            if (eventProcessedEvents.length > 0) {
+                renderAllEventData();
+            }
+        }
+
+        function showEventCard(evt, event) {
+            var card = document.getElementById('eventCard');
+            var title = document.getElementById('eventCardTitle');
+            var content = document.getElementById('eventCardContent');
+            
+            title.textContent = evt.text;
+            
+            var html = '';
+            html += '<div class="event-card-item">';
+            html += '<div class="event-card-label">日期</div>';
+            html += '<div class="event-card-value">' + evt.date + '</div>';
+            html += '</div>';
+            
+            if (evt.duration > 0) {
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">开始时间</div>';
+                html += '<div class="event-card-value">' + formatMinutesToEventTime(evt.startTime) + '</div>';
+                html += '</div>';
+                
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">结束时间</div>';
+                html += '<div class="event-card-value">' + formatMinutesToEventTime(evt.endTime) + '</div>';
+                html += '</div>';
+                
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">持续时间</div>';
+                html += '<div class="event-card-value">' + formatEventDuration(evt.duration) + '</div>';
+                html += '</div>';
+            } else {
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">时间</div>';
+                html += '<div class="event-card-value">' + formatMinutesToEventTime(evt.startTime) + '</div>';
+                html += '</div>';
+            }
+            
+            if (evt.who && evt.who.trim()) {
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">操作人</div>';
+                html += '<div class="event-card-value">' + evt.who + '</div>';
+                html += '</div>';
+            }
+            
+            if (evt.tooltip && evt.tooltip !== evt.text) {
+                html += '<div class="event-card-item">';
+                html += '<div class="event-card-label">详细信息</div>';
+                html += '<div class="event-card-value" style="white-space: pre-wrap;">' + evt.tooltip + '</div>';
+                html += '</div>';
+            }
+            
+            content.innerHTML = html;
+            
+            var clickX = event.clientX;
+            var clickY = event.clientY;
+            
+            card.style.left = '0px';
+            card.style.top = '0px';
+            card.classList.add('show');
+            
+            var cardWidth = card.offsetWidth;
+            var cardHeight = card.offsetHeight;
+            var windowWidth = window.innerWidth;
+            var windowHeight = window.innerHeight;
+            
+            var left = clickX + 15;
+            var top = clickY + 15;
+            
+            if (left + cardWidth > windowWidth - 20) {
+                left = clickX - cardWidth - 15;
+            }
+            
+            if (top + cardHeight > windowHeight - 20) {
+                top = windowHeight - cardHeight - 20;
+            }
+            
+            if (left < 20) {
+                left = 20;
+            }
+            
+            if (top < 20) {
+                top = 20;
+            }
+            
+            card.style.left = left + 'px';
+            card.style.top = top + 'px';
+        }
+
+        function closeEventCard() {
+            var card = document.getElementById('eventCard');
+            card.classList.remove('show');
+        }
+
+        function formatMinutesToEventTime(minutes) {
+            var hours = Math.floor(minutes / 60);
+            var mins = minutes % 60;
+            return (hours < 10 ? '0' + hours : hours) + ':' + (mins < 10 ? '0' + mins : mins);
+        }
+
+        // 页面加载时初始化事件视图的触摸拖动
+        window.addEventListener('load', function() {
+            initEventTouchDrag();
+            
+            document.addEventListener('click', function(e) {
+                var card = document.getElementById('eventCard');
+                if (card.classList.contains('show') && 
+                    !card.contains(e.target) && 
+                    !e.target.closest('.gantt-event')) {
+                    closeEventCard();
+                }
+            });
+        });
+
         // 将侧边气泡绑定到打开中央对话面板的函数
         (function(){
             var bubble = document.getElementById('aiChatBubble');
@@ -3218,9 +4463,62 @@ function bindSwipeToChart(chartType) {
         })();
     </script>
 
+    <!-- 事件视图容器 -->
+    <div id="eventView" class="view-container" style="display: none;">
+        <div class="event-controls">
+            <div class="event-legend">
+                <div class="event-legend-item" data-type="sleep" onclick="toggleEventType('sleep', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);"></div>
+                    <span>睡觉</span>
+                </div>
+                <div class="event-legend-item" data-type="feed-milk" onclick="toggleEventType('feed-milk', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #ffb74d 0%, #ffa726 100%);"></div>
+                    <span>母乳</span>
+                </div>
+                <div class="event-legend-item" data-type="feed-formula" onclick="toggleEventType('feed-formula', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);"></div>
+                    <span>奶粉</span>
+                </div>
+                <div class="event-legend-item" data-type="food" onclick="toggleEventType('food', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #aed581 0%, #9ccc65 100%);"></div>
+                    <span>辅食</span>
+                </div>
+                <div class="event-legend-item" data-type="poop" onclick="toggleEventType('poop', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #bcaaa4 0%, #a1887f 100%);"></div>
+                    <span>换尿布</span>
+                </div>
+                <div class="event-legend-item" data-type="weight" onclick="toggleEventType('weight', this)">
+                    <div class="event-legend-color" style="background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);"></div>
+                    <span>体重</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gantt-container">
+            <div class="gantt-fixed-column">
+                <div class="gantt-header-date">日期</div>
+                <div class="gantt-dates-body" id="ganttDatesBody"></div>
+            </div>
+            
+            <div class="gantt-scroll-area" id="ganttScrollArea">
+                <div class="gantt-header-hours" id="ganttHeaderHours"></div>
+                <div class="gantt-content" id="ganttContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 事件悬浮卡片 -->
+    <div class="event-card" id="eventCard">
+        <div class="event-card-header">
+            <div class="event-card-title" id="eventCardTitle">事件详情</div>
+            <button class="event-card-close" onclick="closeEventCard()">×</button>
+        </div>
+        <div id="eventCardContent"></div>
+    </div>
+
     <!-- 底部导航栏 -->
     <div class="bottom-nav">
-        <div class="nav-item" onclick="location.href='#'">
+        <div class="nav-item" onclick="switchView('event')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <line x1="9" y1="9" x2="15" y2="9"/>
@@ -3228,7 +4526,7 @@ function bindSwipeToChart(chartType) {
             </svg>
             <span>事件</span>
         </div>
-        <div class="nav-item active">
+        <div class="nav-item active" onclick="switchView('analysis')">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="20" x2="18" y2="10"/>
                 <line x1="12" y1="20" x2="12" y2="4"/>

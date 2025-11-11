@@ -1402,9 +1402,34 @@
 
         // 页面加载时初始化
         window.addEventListener('load', function() {
-            loadData();
+            // 尝试从 localStorage 获取主页面解析后的原始数据（优先）
+            try {
+                var stored = localStorage.getItem('baby_all_raw_rows');
+                if (stored) {
+                    var parsed = JSON.parse(stored);
+                    if (parsed && parsed.length > 0) {
+                        allData = parsed;
+                        processedEvents = processEvents(allData);
+                        if (processedEvents.length > 0) {
+                            renderHeaderWithTime(false);
+                            setDateRange(7);
+                        } else {
+                            loadData();
+                        }
+                    } else {
+                        loadData();
+                    }
+                } else {
+                    // 没有缓存，使用默认加载逻辑（提示上传或后备fetch）
+                    loadData();
+                }
+            } catch (err) {
+                console.warn('localStorage read failed', err);
+                loadData();
+            }
+
             initTouchDrag();
-            
+
             // 点击页面其他地方关闭悬浮卡片
             document.addEventListener('click', function(e) {
                 var card = document.getElementById('eventCard');
