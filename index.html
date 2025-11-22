@@ -3803,11 +3803,11 @@ function bindSwipeToChart(chartType) {
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // 向左滑动，看更早的日期（昨天、前天...）
-                    prevDailySummary();
-                } else {
-                    // 向右滑动，看更近的日期（回到今天）
+                    // 手指向左滑动（内容向左移），看更近的日期（回到今天）
                     nextDailySummary();
+                } else {
+                    // 手指向右滑动（内容向右移），看更早的日期（昨天、前天...）
+                    prevDailySummary();
                 }
             }
         }
