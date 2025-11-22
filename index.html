@@ -533,64 +533,9 @@
             border-radius: 4px;
         }
 
-        /* 轮播导航按钮 */
+        /* 轮播导航按钮 - 隐藏 */
         .carousel-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: all 0.2s;
-            z-index: 10;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .carousel-nav:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .carousel-nav:active {
-            background: rgba(255, 255, 255, 0.4);
-        }
-
-        .carousel-nav.prev {
-            left: 8px;
-        }
-
-        .carousel-nav.next {
-            right: 8px;
-        }
-
-        .carousel-nav:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        @media (max-width: 600px) {
-            .carousel-nav {
-                width: 32px;
-                height: 32px;
-                font-size: 18px;
-            }
-            
-            .carousel-nav.prev {
-                left: 4px;
-            }
-            
-            .carousel-nav.next {
-                right: 4px;
-            }
+            display: none;
         }
 
         .summary-header {
@@ -3576,7 +3521,6 @@ function bindSwipeToChart(chartType) {
 
         function createDailySummarySlide(dayData, dateObj, dayIndex, isToday) {
             var slideClass = isToday ? 'today-summary' : (dayIndex === 1 ? 'yesterday-summary' : 'older-summary');
-            var dateLabel = isToday ? '今日' : (dayIndex === 1 ? '昨日' : dateObj.getMonth() + 1 + '/' + dateObj.getDate());
             var emoji = isToday ? '📅' : (dayIndex === 1 ? '📆' : '📋');
             
             // 确保所有数据字段都有默认值
@@ -3598,7 +3542,7 @@ function bindSwipeToChart(chartType) {
             var html = '<div class="daily-summary-slide">';
             html += '<div class="' + slideClass + '">';
             html += '<div class="summary-header">';
-            html += '<h2>' + emoji + ' ' + dateLabel + '汇总 <span>(' + (dateObj.getMonth() + 1) + '/' + dateObj.getDate() + ')</span></h2>';
+            html += '<h2>' + emoji + ' ' + (dateObj.getMonth() + 1) + '/' + dateObj.getDate() + ' 汇总</h2>';
             html += '</div>';
             html += '<div class="summary-content">';
             html += '<div class="today-grid">';
@@ -3671,47 +3615,35 @@ function bindSwipeToChart(chartType) {
             
             if (dates.length === 0) return;
             
-            // 准备最近7天的数据（或所有数据，如果少于7天）
+            // 准备最近7天的数据（包括没有数据的日期）
+            // 时间轴从左到右：过去 → 现在（今天在最右边）
             dailySummaryData = [];
             var today = new Date();
             today.setHours(0, 0, 0, 0);
             
-            // 收集所有有数据的日期
-            var availableDates = [];
-            for (var i = 0; i < 7; i++) {
+            // 创建空数据模板
+            var emptyDayData = {
+                milk: 0, milkMin: 0, formula: 0, formulaMl: 0,
+                sleep: 0, sleepCnt: 0, maxSleep: 0,
+                dayFeed: 0, nightFeed: 0, daySleep: 0, nightSleep: 0,
+                food: 0, poop: 0, weight: 0
+            };
+            
+            // 从6天前到今天，按时间顺序排列
+            for (var i = 6; i >= 0; i--) {
                 var targetDate = new Date(today);
                 targetDate.setDate(targetDate.getDate() - i);
                 var dateKey = String(targetDate.getMonth() + 1).padStart(2, '0') + '-' + String(targetDate.getDate()).padStart(2, '0');
                 
-                var dayData = data[dateKey];
-                if (dayData) {
-                    availableDates.push({
-                        date: targetDate,
-                        dateKey: dateKey,
-                        data: dayData,
-                        isToday: i === 0
-                    });
-                }
+                var dayData = data[dateKey] || emptyDayData;
+                
+                dailySummaryData.push({
+                    date: targetDate,
+                    dateKey: dateKey,
+                    data: dayData,
+                    isToday: i === 0
+                });
             }
-            
-            // 如果最近7天没有数据，使用最近的数据
-            if (availableDates.length === 0 && dates.length > 0) {
-                for (var j = dates.length - 1; j >= Math.max(0, dates.length - 7); j--) {
-                    var dateKey = dates[j];
-                    var dayData = data[dateKey];
-                    var dateParts = dayData.fullDate.split('-');
-                    var targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-                    
-                    availableDates.push({
-                        date: targetDate,
-                        dateKey: dateKey,
-                        data: dayData,
-                        isToday: false
-                    });
-                }
-            }
-            
-            dailySummaryData = availableDates;
             
             if (dailySummaryData.length === 0) return;
             
@@ -3722,11 +3654,13 @@ function bindSwipeToChart(chartType) {
             indicators.innerHTML = '';
             
             dailySummaryData.forEach(function(item, index) {
+                var isLastSlide = index === dailySummaryData.length - 1;
                 wrapper.innerHTML += createDailySummarySlide(item.data, item.date, index, item.isToday);
-                indicators.innerHTML += '<div class="carousel-dot' + (index === 0 ? ' active' : '') + '" onclick="goToSlide(' + index + ')"></div>';
+                indicators.innerHTML += '<div class="carousel-dot' + (isLastSlide ? ' active' : '') + '" onclick="goToSlide(' + index + ')"></div>';
             });
             
-            currentSlideIndex = 0;
+            // 默认显示最后一张（今天）
+            currentSlideIndex = dailySummaryData.length - 1;
             updateCarouselPosition();
             updateCarouselButtons();
             
@@ -3753,25 +3687,27 @@ function bindSwipeToChart(chartType) {
             var prevBtn = document.querySelector('.carousel-nav.prev');
             var nextBtn = document.querySelector('.carousel-nav.next');
             
-            // prev按钮在左边，用于看更早的日期（index增加）
-            prevBtn.disabled = currentSlideIndex === dailySummaryData.length - 1;
-            // next按钮在右边，用于看更近的日期（index减少）
-            nextBtn.disabled = currentSlideIndex === 0;
+            if (prevBtn && nextBtn) {
+                // prev按钮在左边，用于看更早的日期（index减少）
+                prevBtn.disabled = currentSlideIndex === 0;
+                // next按钮在右边，用于看更近的日期（index增加）
+                nextBtn.disabled = currentSlideIndex === dailySummaryData.length - 1;
+            }
         }
 
         function prevDailySummary() {
-            // 左边按钮：看更早的日期（昨天、前天...）
-            if (currentSlideIndex < dailySummaryData.length - 1) {
-                currentSlideIndex++;
+            // 看更早的日期（向左，index减少）
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
                 updateCarouselPosition();
                 updateCarouselButtons();
             }
         }
 
         function nextDailySummary() {
-            // 右边按钮：看更近的日期（回到今天）
-            if (currentSlideIndex > 0) {
-                currentSlideIndex--;
+            // 看更近的日期（向右，index增加）
+            if (currentSlideIndex < dailySummaryData.length - 1) {
+                currentSlideIndex++;
                 updateCarouselPosition();
                 updateCarouselButtons();
             }
@@ -3803,10 +3739,10 @@ function bindSwipeToChart(chartType) {
             
             if (Math.abs(diff) > swipeThreshold) {
                 if (diff > 0) {
-                    // 手指向左滑动（内容向左移），看更近的日期（回到今天）
+                    // 手指向左滑动（内容向左移），看更近的日期（向右移动到今天）
                     nextDailySummary();
                 } else {
-                    // 手指向右滑动（内容向右移），看更早的日期（昨天、前天...）
+                    // 手指向右滑动（内容向右移），看更早的日期（向左移动到过去）
                     prevDailySummary();
                 }
             }
@@ -3818,10 +3754,10 @@ function bindSwipeToChart(chartType) {
             if (document.getElementById('dataContainer').style.display !== 'block') return;
             
             if (e.key === 'ArrowLeft') {
-                // 左箭头：看更早的日期
+                // 左箭头：看更早的日期（向左）
                 prevDailySummary();
             } else if (e.key === 'ArrowRight') {
-                // 右箭头：看更近的日期
+                // 右箭头：看更近的日期（向右）
                 nextDailySummary();
             }
         });
