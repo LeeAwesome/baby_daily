@@ -456,22 +456,141 @@
             color: #666
         }
 
+        /* 日汇总轮播容器 */
+        .daily-summary-carousel {
+            position: relative;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .daily-summary-wrapper {
+            display: flex;
+            transition: transform 0.3s ease-out;
+            touch-action: pan-y;
+        }
+
+        .daily-summary-slide {
+            min-width: 100%;
+            flex-shrink: 0;
+        }
+
         .today-summary {
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
             padding: clamp(12px, 3vw, 18px);
             border-radius: 12px;
-            margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, .2);
             color: #fff
         }
 
         .yesterday-summary {
-            background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             padding: clamp(12px, 3vw, 18px);
             border-radius: 12px;
-            margin-bottom: 15px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, .2);
             color: #fff
+        }
+
+        .older-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: clamp(12px, 3vw, 18px);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .2);
+            color: #fff
+        }
+
+        /* 轮播指示器 */
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            max-width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 6px 12px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .carousel-dot:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .carousel-dot.active {
+            background: rgba(255, 255, 255, 0.95);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* 轮播导航按钮 */
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+            z-index: 10;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-nav:active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .carousel-nav.prev {
+            left: 8px;
+        }
+
+        .carousel-nav.next {
+            right: 8px;
+        }
+
+        .carousel-nav:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        @media (max-width: 600px) {
+            .carousel-nav {
+                width: 32px;
+                height: 32px;
+                font-size: 18px;
+            }
+            
+            .carousel-nav.prev {
+                left: 4px;
+            }
+            
+            .carousel-nav.next {
+                right: 4px;
+            }
         }
 
         .summary-header {
@@ -1395,176 +1514,15 @@
         </div>
 
         <div id="dataContainer" class="hidden">
-            <!-- 今日汇总 -->
-            <div class="today-summary">
-                <div class="summary-header">
-                    <h2>📅 今日汇总 <span id="todayDate"></span></h2>
+            <!-- 日汇总轮播 -->
+            <div class="daily-summary-carousel">
+                <button class="carousel-nav prev" onclick="prevDailySummary()">‹</button>
+                <button class="carousel-nav next" onclick="nextDailySummary()">›</button>
+                <div class="daily-summary-wrapper" id="dailySummaryWrapper">
+                    <!-- 动态生成的日汇总卡片将插入这里 -->
                 </div>
-                <div class="summary-content">
-                    <div class="today-grid">
-                        <div class="today-card" id="feedCard">
-                            <h3>🍼 喂奶情况</h3>
-                            <div class="detail">
-                                <span>总次数</span>
-                                <span id="todayFeedCount" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>奶粉</span>
-                                <span id="todayFormula" class="num">-</span>
-                                <span>ml</span>
-                            </div>
-                            <div class="detail">
-                                <span>母乳</span>
-                                <span id="todayBreast" class="num">-</span>
-                                <span>分钟</span>
-                            </div>
-                        </div>
-                        <div class="today-card" id="sleepCard">
-                            <h3>😴 睡眠情况</h3>
-                            <div class="detail">
-                                <span>次数</span>
-                                <span id="todaySleepCount" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>总时长</span>
-                                <span id="todaySleepTotal" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                            <div class="detail">
-                                <span>最长</span>
-                                <span id="todaySleepMax" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                        <div class="today-card">
-                            <h3>☀️ 白天</h3>
-                            <div class="detail">
-                                <span>喂奶</span>
-                                <span id="todayDayFeed" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>睡眠</span>
-                                <span id="todayDaySleep" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                        <div class="today-card">
-                            <h3>🌙 夜间</h3>
-                            <div class="detail">
-                                <span>喂奶</span>
-                                <span id="todayNightFeed" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>睡眠</span>
-                                <span id="todayNightSleep" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="todayOther" class="today-grid" style="display:none;">
-                        <div class="today-card" id="weightCard" style="display:none">
-                            <h3>⚖️ 体重</h3>
-                            <div class="detail">
-                                <span>今日</span>
-                                <span id="todayWeight" class="num">-</span>
-                                <span>kg</span>
-                            </div>
-                        </div>
-                        <div class="today-card" id="foodCard" style="display:none">
-                            <h3>🍽️ 辅食</h3>
-                            <div class="detail">
-                                <span>次数</span>
-                                <span id="todayFood" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                        </div>
-                        <div class="today-card" id="poopCard" style="display:none">
-                            <h3>💩 大便</h3>
-                            <div class="detail">
-                                <span>次数</span>
-                                <span id="todayPoop" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 昨日汇总 -->
-            <div class="yesterday-summary">
-                <div class="summary-header" onclick="toggleYesterday()">
-                    <h2>📆 昨日汇总 <span id="yesterdayDate"></span></h2>
-                    <span class="toggle-icon" id="yesterdayToggle">▼</span>
-                </div>
-                <div class="summary-content collapsed" id="yesterdayContent">
-                    <div class="today-grid">
-                        <div class="today-card">
-                            <h3>🍼 喂奶情况</h3>
-                            <div class="detail">
-                                <span>总次数</span>
-                                <span id="yesterdayFeedCount" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>奶粉</span>
-                                <span id="yesterdayFormula" class="num">-</span>
-                                <span>ml</span>
-                            </div>
-                            <div class="detail">
-                                <span>母乳</span>
-                                <span id="yesterdayBreast" class="num">-</span>
-                                <span>分钟</span>
-                            </div>
-                        </div>
-                        <div class="today-card">
-                            <h3>😴 睡眠情况</h3>
-                            <div class="detail">
-                                <span>次数</span>
-                                <span id="yesterdaySleepCount" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>总时长</span>
-                                <span id="yesterdaySleepTotal" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                            <div class="detail">
-                                <span>最长</span>
-                                <span id="yesterdaySleepMax" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                        <div class="today-card">
-                            <h3>☀️ 白天</h3>
-                            <div class="detail">
-                                <span>喂奶</span>
-                                <span id="yesterdayDayFeed" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>睡眠</span>
-                                <span id="yesterdayDaySleep" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                        <div class="today-card">
-                            <h3>🌙 夜间</h3>
-                            <div class="detail">
-                                <span>喂奶</span>
-                                <span id="yesterdayNightFeed" class="num">-</span>
-                                <span>次</span>
-                            </div>
-                            <div class="detail">
-                                <span>睡眠</span>
-                                <span id="yesterdayNightSleep" class="num">-</span>
-                                <span>h</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="carousel-indicators" id="carouselIndicators">
+                    <!-- 动态生成的指示器将插入这里 -->
                 </div>
             </div>
 
@@ -2537,19 +2495,7 @@
             }
         }
 
-        function toggleYesterday() {
-            var content = document.getElementById('yesterdayContent');
-            var icon = document.getElementById('yesterdayToggle');
-            if (content.classList.contains('collapsed')) {
-                content.classList.remove('collapsed');
-                icon.classList.remove('collapsed');
-                icon.textContent = '▼';
-            } else {
-                content.classList.add('collapsed');
-                icon.classList.add('collapsed');
-                icon.textContent = '▶';
-            }
-        }
+
 
         function calculateAndDisplayAge() {
             // 优先从localStorage读取，如果没有则从input元素读取
@@ -3622,69 +3568,263 @@ function bindSwipeToChart(chartType) {
             renderChart(chartType, dimension);
         }
 
-        function renderToday(td, latest, foods) {
-            if (!td) return;
-            
-            // 清空之前的记录数据（防止重复）
-            var latestRecords = document.querySelectorAll('.latest-record');
-            latestRecords.forEach(function(el) { el.remove(); });
-            
-            var now = new Date();
-            document.getElementById('todayDate').textContent = '(' + (now.getMonth() + 1) + '/' + now.getDate() + ')';
-            document.getElementById('todayFeedCount').textContent = td.milk + td.formula;
-            document.getElementById('todayFormula').textContent = Math.round(td.formulaMl);
-            document.getElementById('todayBreast').textContent = Math.round(td.milkMin);
-            document.getElementById('todaySleepCount').textContent = td.sleep.length;
-            document.getElementById('todaySleepTotal').textContent = td.sleepTotal.toFixed(1);
-            document.getElementById('todaySleepMax').textContent = td.maxSleep.toFixed(1);
-            document.getElementById('todayDayFeed').textContent = td.dayFeed;
-            document.getElementById('todayDaySleep').textContent = td.daySleep.toFixed(1);
-            document.getElementById('todayNightFeed').textContent = td.nightFeed;
-            document.getElementById('todayNightSleep').textContent = td.nightSleep.toFixed(1);
+        // ========== 日汇总轮播功能 ==========
+        var dailySummaryData = [];
+        var currentSlideIndex = 0;
+        var carouselTouchStartX = 0;
+        var carouselTouchEndX = 0;
 
-            if (latest.milk) document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 母乳 ' + latest.milk.t.substring(0, 5) + ' (' + latest.milk.v + '分钟)</div>';
-            if (latest.formula) document.getElementById('feedCard').innerHTML += '<div class="latest-record">🍼 奶粉 ' + latest.formula.t.substring(0, 5) + ' (' + latest.formula.v + 'ml)</div>';
-            if (latest.sleep) document.getElementById('sleepCard').innerHTML += '<div class="latest-record">💤 ' + latest.sleep.t.substring(0, 5) + ' 醒来 (睡了' + latest.sleep.h + 'h)</div>';
+        function createDailySummarySlide(dayData, dateObj, dayIndex, isToday) {
+            var slideClass = isToday ? 'today-summary' : (dayIndex === 1 ? 'yesterday-summary' : 'older-summary');
+            var dateLabel = isToday ? '今日' : (dayIndex === 1 ? '昨日' : dateObj.getMonth() + 1 + '/' + dateObj.getDate());
+            var emoji = isToday ? '📅' : (dayIndex === 1 ? '📆' : '📋');
+            
+            // 确保所有数据字段都有默认值
+            var milk = dayData.milk || 0;
+            var formula = dayData.formula || 0;
+            var formulaMl = dayData.formulaMl || 0;
+            var milkMin = dayData.milkMin || 0;
+            var sleepTotal = dayData.sleep || dayData.sleepTotal || 0;
+            var sleepCount = dayData.sleepCnt || (dayData.sleep && dayData.sleep.length) || 0;
+            var maxSleep = dayData.maxSleep || 0;
+            var dayFeed = dayData.dayFeed || 0;
+            var daySleep = dayData.daySleep || 0;
+            var nightFeed = dayData.nightFeed || 0;
+            var nightSleep = dayData.nightSleep || 0;
+            var weight = dayData.weight || 0;
+            var food = dayData.food || 0;
+            var poop = dayData.poop || 0;
+            
+            var html = '<div class="daily-summary-slide">';
+            html += '<div class="' + slideClass + '">';
+            html += '<div class="summary-header">';
+            html += '<h2>' + emoji + ' ' + dateLabel + '汇总 <span>(' + (dateObj.getMonth() + 1) + '/' + dateObj.getDate() + ')</span></h2>';
+            html += '</div>';
+            html += '<div class="summary-content">';
+            html += '<div class="today-grid">';
+            
+            // 喂奶情况 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>🍼 喂奶情况</h3>';
+            html += '<div class="detail"><span>总次数</span><span class="num">' + (milk + formula) + '</span><span>次</span></div>';
+            html += '<div class="detail"><span>奶粉</span><span class="num">' + Math.round(formulaMl) + '</span><span>ml</span></div>';
+            html += '<div class="detail"><span>母乳</span><span class="num">' + Math.round(milkMin) + '</span><span>分钟</span></div>';
+            html += '</div>';
+            
+            // 睡眠情况 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>😴 睡眠情况</h3>';
+            html += '<div class="detail"><span>次数</span><span class="num">' + sleepCount + '</span><span>次</span></div>';
+            html += '<div class="detail"><span>总时长</span><span class="num">' + (typeof sleepTotal === 'number' ? sleepTotal.toFixed(1) : sleepTotal) + '</span><span>h</span></div>';
+            html += '<div class="detail"><span>最长</span><span class="num">' + (typeof maxSleep === 'number' ? maxSleep.toFixed(1) : maxSleep) + '</span><span>h</span></div>';
+            html += '</div>';
+            
+            // 白天 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>☀️ 白天</h3>';
+            html += '<div class="detail"><span>喂奶</span><span class="num">' + dayFeed + '</span><span>次</span></div>';
+            html += '<div class="detail"><span>睡眠</span><span class="num">' + (typeof daySleep === 'number' ? daySleep.toFixed(1) : daySleep) + '</span><span>h</span></div>';
+            html += '</div>';
+            
+            // 夜间 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>🌙 夜间</h3>';
+            html += '<div class="detail"><span>喂奶</span><span class="num">' + nightFeed + '</span><span>次</span></div>';
+            html += '<div class="detail"><span>睡眠</span><span class="num">' + (typeof nightSleep === 'number' ? nightSleep.toFixed(1) : nightSleep) + '</span><span>h</span></div>';
+            html += '</div>';
+            
+            html += '</div>'; // today-grid
+            
+            // 其他数据（体重、辅食、大便）- 始终显示第二行，保持卡片高度一致
+            html += '<div class="today-grid" style="margin-top: 10px;">';
+            
+            // 体重 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>⚖️ 体重</h3>';
+            html += '<div class="detail"><span>记录</span><span class="num">' + (weight > 0 ? weight : '-') + '</span><span>' + (weight > 0 ? 'kg' : '') + '</span></div>';
+            html += '</div>';
+            
+            // 辅食 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>🍽️ 辅食</h3>';
+            html += '<div class="detail"><span>次数</span><span class="num">' + food + '</span><span>次</span></div>';
+            html += '</div>';
+            
+            // 大便 - 始终显示
+            html += '<div class="today-card">';
+            html += '<h3>💩 大便</h3>';
+            html += '<div class="detail"><span>次数</span><span class="num">' + poop + '</span><span>次</span></div>';
+            html += '</div>';
+            
+            html += '</div>'; // 第二个 today-grid
+            
+            html += '</div>'; // summary-content
+            html += '</div>'; // summary class
+            html += '</div>'; // slide
+            
+            return html;
+        }
 
-            if (td.weight) {
-                document.getElementById('weightCard').style.display = 'block';
-                document.getElementById('todayWeight').textContent = td.weight;
-                document.getElementById('todayOther').style.display = 'grid';
-            }
-            if (td.food > 0) {
-                document.getElementById('foodCard').style.display = 'block';
-                document.getElementById('todayFood').textContent = td.food;
-                document.getElementById('todayOther').style.display = 'grid';
-                if (foods && foods.length > 0) {
-                    var foodContent = document.getElementById('foodCard');
-                    foods.forEach(function(food) {
-                        foodContent.innerHTML += '<div class="latest-record">🥄 ' + food.t.substring(0, 5) + ' ' + food.desc + '</div>';
+        function renderDailySummaryCarousel(analyzed) {
+            var data = analyzed.data;
+            var dates = analyzed.dates;
+            
+            if (dates.length === 0) return;
+            
+            // 准备最近7天的数据（或所有数据，如果少于7天）
+            dailySummaryData = [];
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // 收集所有有数据的日期
+            var availableDates = [];
+            for (var i = 0; i < 7; i++) {
+                var targetDate = new Date(today);
+                targetDate.setDate(targetDate.getDate() - i);
+                var dateKey = String(targetDate.getMonth() + 1).padStart(2, '0') + '-' + String(targetDate.getDate()).padStart(2, '0');
+                
+                var dayData = data[dateKey];
+                if (dayData) {
+                    availableDates.push({
+                        date: targetDate,
+                        dateKey: dateKey,
+                        data: dayData,
+                        isToday: i === 0
                     });
                 }
             }
-            if (td.poop > 0) {
-                document.getElementById('poopCard').style.display = 'block';
-                document.getElementById('todayPoop').textContent = td.poop;
-                document.getElementById('todayOther').style.display = 'grid';
+            
+            // 如果最近7天没有数据，使用最近的数据
+            if (availableDates.length === 0 && dates.length > 0) {
+                for (var j = dates.length - 1; j >= Math.max(0, dates.length - 7); j--) {
+                    var dateKey = dates[j];
+                    var dayData = data[dateKey];
+                    var dateParts = dayData.fullDate.split('-');
+                    var targetDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                    
+                    availableDates.push({
+                        date: targetDate,
+                        dateKey: dateKey,
+                        data: dayData,
+                        isToday: false
+                    });
+                }
+            }
+            
+            dailySummaryData = availableDates;
+            
+            if (dailySummaryData.length === 0) return;
+            
+            // 生成轮播HTML
+            var wrapper = document.getElementById('dailySummaryWrapper');
+            var indicators = document.getElementById('carouselIndicators');
+            wrapper.innerHTML = '';
+            indicators.innerHTML = '';
+            
+            dailySummaryData.forEach(function(item, index) {
+                wrapper.innerHTML += createDailySummarySlide(item.data, item.date, index, item.isToday);
+                indicators.innerHTML += '<div class="carousel-dot' + (index === 0 ? ' active' : '') + '" onclick="goToSlide(' + index + ')"></div>';
+            });
+            
+            currentSlideIndex = 0;
+            updateCarouselPosition();
+            updateCarouselButtons();
+            
+            // 添加触摸滑动支持
+            initCarouselSwipe();
+        }
+
+        function updateCarouselPosition() {
+            var wrapper = document.getElementById('dailySummaryWrapper');
+            wrapper.style.transform = 'translateX(-' + (currentSlideIndex * 100) + '%)';
+            
+            // 更新指示器
+            var dots = document.querySelectorAll('.carousel-dot');
+            dots.forEach(function(dot, index) {
+                if (index === currentSlideIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function updateCarouselButtons() {
+            var prevBtn = document.querySelector('.carousel-nav.prev');
+            var nextBtn = document.querySelector('.carousel-nav.next');
+            
+            // prev按钮在左边，用于看更早的日期（index增加）
+            prevBtn.disabled = currentSlideIndex === dailySummaryData.length - 1;
+            // next按钮在右边，用于看更近的日期（index减少）
+            nextBtn.disabled = currentSlideIndex === 0;
+        }
+
+        function prevDailySummary() {
+            // 左边按钮：看更早的日期（昨天、前天...）
+            if (currentSlideIndex < dailySummaryData.length - 1) {
+                currentSlideIndex++;
+                updateCarouselPosition();
+                updateCarouselButtons();
             }
         }
 
-        function renderYesterday(yd) {
-            if (!yd) return;
-            var yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            document.getElementById('yesterdayDate').textContent = '(' + (yesterday.getMonth() + 1) + '/' + yesterday.getDate() + ')';
-            document.getElementById('yesterdayFeedCount').textContent = yd.milk + yd.formula;
-            document.getElementById('yesterdayFormula').textContent = Math.round(yd.formulaMl);
-            document.getElementById('yesterdayBreast').textContent = Math.round(yd.milkMin);
-            document.getElementById('yesterdaySleepCount').textContent = yd.sleepCnt;
-            document.getElementById('yesterdaySleepTotal').textContent = yd.sleep.toFixed(1);
-            document.getElementById('yesterdaySleepMax').textContent = yd.maxSleep;
-            document.getElementById('yesterdayDayFeed').textContent = yd.dayFeed;
-            document.getElementById('yesterdayDaySleep').textContent = yd.daySleep.toFixed(1);
-            document.getElementById('yesterdayNightFeed').textContent = yd.nightFeed;
-            document.getElementById('yesterdayNightSleep').textContent = yd.nightSleep.toFixed(1);
+        function nextDailySummary() {
+            // 右边按钮：看更近的日期（回到今天）
+            if (currentSlideIndex > 0) {
+                currentSlideIndex--;
+                updateCarouselPosition();
+                updateCarouselButtons();
+            }
         }
+
+        function goToSlide(index) {
+            currentSlideIndex = index;
+            updateCarouselPosition();
+            updateCarouselButtons();
+        }
+
+        function initCarouselSwipe() {
+            var carousel = document.querySelector('.daily-summary-carousel');
+            if (!carousel) return;
+            
+            carousel.addEventListener('touchstart', function(e) {
+                carouselTouchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+            
+            carousel.addEventListener('touchend', function(e) {
+                carouselTouchEndX = e.changedTouches[0].screenX;
+                handleCarouselSwipe();
+            }, { passive: true });
+        }
+
+        function handleCarouselSwipe() {
+            var swipeThreshold = 50;
+            var diff = carouselTouchStartX - carouselTouchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // 向左滑动，看更早的日期（昨天、前天...）
+                    prevDailySummary();
+                } else {
+                    // 向右滑动，看更近的日期（回到今天）
+                    nextDailySummary();
+                }
+            }
+        }
+
+        // 键盘导航支持
+        document.addEventListener('keydown', function(e) {
+            // 只在分析视图激活时响应
+            if (document.getElementById('dataContainer').style.display !== 'block') return;
+            
+            if (e.key === 'ArrowLeft') {
+                // 左箭头：看更早的日期
+                prevDailySummary();
+            } else if (e.key === 'ArrowRight') {
+                // 右箭头：看更近的日期
+                nextDailySummary();
+            }
+        });
 
         function renderCharts(analyzed) {
             console.log('renderCharts called', analyzed);
@@ -3700,8 +3840,8 @@ function bindSwipeToChart(chartType) {
             document.getElementById('dataContainer').style.display = 'block';
             document.getElementById('fileContainer').style.display = 'none';
 
-            renderToday(analyzed.today, analyzed.latest, analyzed.foods);
-            renderYesterday(analyzed.yesterday);
+            // 渲染日汇总轮播
+            renderDailySummaryCarousel(analyzed);
 
             var totalS = dates.reduce(function (s, d) { return s + data[d].sleep; }, 0);
             var totalF = dates.reduce(function (s, d) { return s + data[d].formulaMl; }, 0);
