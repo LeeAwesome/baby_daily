@@ -2119,6 +2119,9 @@
             var btn = document.querySelector('.refresh-btn');
             btn.classList.add('loading');
             
+            // 记住当前视图状态
+            var isEventView = document.getElementById('eventView').style.display === 'flex';
+            
             fetch('./baby_log.csv', { cache: 'no-cache' })
                 .then(function (r) { return r.text(); })
                 .then(function (text) {
@@ -2133,6 +2136,12 @@
                         
                         allAnalyzedData = analyzeData(csv);
                         renderCharts(allAnalyzedData);
+                        
+                        // 如果之前在事件视图，刷新后恢复到事件视图
+                        if (isEventView) {
+                            switchView('event');
+                        }
+                        
                         showSuccessMessage('✅ 数据已刷新！');
                     } else {
                         showSuccessMessage('⚠️ 没有找到数据');
