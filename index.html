@@ -388,73 +388,7 @@
             margin-top: -55px;
         }
 
-        .file-input-container {
-            background: rgba(255, 255, 255, .95);
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, .1)
-        }
 
-        .toggle-btn {
-            background: transparent;
-            border: none;
-            color: #667eea;
-            font-size: clamp(12px, 3vw, 14px);
-            cursor: pointer;
-            padding: 5px;
-            text-decoration: underline
-        }
-
-        #fileDetails {
-            margin-top: 12px
-        }
-
-        .birth-date-input {
-            margin: 12px 0;
-            text-align: center;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: center
-        }
-
-        .birth-date-input label {
-            color: #667eea;
-            font-weight: 600;
-            font-size: 14px
-        }
-
-        .birth-date-input input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px
-        }
-
-        .file-label {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #667eea;
-            color: #fff;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: clamp(13px, 3vw, 15px);
-            font-weight: 600;
-            margin-top: 10px
-        }
-
-        .file-input-container input[type="file"] {
-            display: none
-        }
-
-        .status {
-            margin-top: 10px;
-            font-size: clamp(11px, 2.5vw, 13px);
-            color: #666
-        }
 
         /* 日汇总轮播容器 */
         .daily-summary-carousel {
@@ -540,9 +474,8 @@
 
         .summary-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
-            cursor: pointer;
             user-select: none;
         }
 
@@ -550,7 +483,7 @@
             font-size: clamp(16px, 4vw, 20px);
             margin-bottom: 0;
             font-weight: 700;
-            flex: 1;
+            text-align: left;
         }
 
         .toggle-icon {
@@ -1443,21 +1376,6 @@
         </div>
         <span id="babyAge">正在计算...</span>
 
-        <div id="fileContainer" class="file-input-container">
-            <button id="toggleBtn" class="toggle-btn" onclick="toggleFileSection()">📁 手动上传CSV（点击展开）</button>
-            <div id="fileDetails" style="display:none">
-                <div class="birth-date-input">
-                    <label for="birthDate">📅 宝宝生日：</label>
-                    <input type="date" id="birthDate" value="2025-02-24">
-                </div>
-                <label class="file-label" for="csvFile">
-                    📂 选择CSV文件
-                    <input type="file" id="csvFile" accept=".csv" onchange="handleCSVUpload(event)">
-                </label>
-                <div class="status" id="status">等待上传CSV文件</div>
-            </div>
-        </div>
-
         <div id="dataContainer" class="hidden">
             <!-- 日汇总轮播 -->
             <div class="daily-summary-carousel">
@@ -1645,6 +1563,15 @@
                         <label for="birthDateInput">宝宝生日 *</label>
                         <input type="date" id="birthDateInput" required>
                     </div>
+                    
+                    <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 16px;">📁 数据管理</h3>
+                    <div class="form-group">
+                        <label for="csvFileInput">上传CSV文件</label>
+                        <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVUploadFromSettings(event)" style="display: block; width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; cursor: pointer;">
+                        <small style="color: #999; margin-top: 5px; display: block;">📂 选择baby_log.csv文件进行分析</small>
+                        <div id="uploadStatus" style="margin-top: 10px; font-size: 13px; color: #666;"></div>
+                    </div>
+                    
                     <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 16px;">🤖 AI助手配置</h3>
                     <div class="form-group">
                         <label for="llmProvider">LLM服务商</label>
@@ -2428,17 +2355,7 @@
             }
         }
 
-        function toggleFileSection() {
-            var details = document.getElementById('fileDetails');
-            var btn = document.getElementById('toggleBtn');
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                btn.textContent = '📁 收起';
-            } else {
-                details.style.display = 'none';
-                btn.textContent = '📁 手动上传CSV（点击展开）';
-            }
-        }
+
 
 
 
@@ -2472,11 +2389,14 @@
         }
 
         // 处理CSV文件上传
-        function handleCSVUpload(event) {
+        // 从设置页面上传CSV文件
+        function handleCSVUploadFromSettings(event) {
             var file = event.target.files[0];
             if (!file) return;
             
-            document.getElementById('status').textContent = '⏳ 正在读取文件...';
+            var statusEl = document.getElementById('uploadStatus');
+            statusEl.textContent = '⏳ 正在读取文件...';
+            statusEl.style.color = '#667eea';
             
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -2485,7 +2405,8 @@
                     var csv = parseCSV(text);
                     
                     if (csv.length === 0) {
-                        document.getElementById('status').textContent = '❌ 文件格式错误或无数据';
+                        statusEl.textContent = '❌ 文件格式错误或无数据';
+                        statusEl.style.color = '#ff6b6b';
                         return;
                     }
                     
@@ -2500,7 +2421,8 @@
                     allAnalyzedData = analyzeData(csv);
                     renderCharts(allAnalyzedData);
                     
-                    document.getElementById('status').textContent = '✅ 文件加载成功！共 ' + csv.length + ' 条记录';
+                    statusEl.textContent = '✅ 文件加载成功！共 ' + csv.length + ' 条记录';
+                    statusEl.style.color = '#4caf50';
                     
                     // 显示数据容器
                     var dataContainer = document.getElementById('dataContainer');
@@ -2509,17 +2431,29 @@
                     }
                     
                     showSuccessMessage('✅ CSV文件加载成功！');
+                    
+                    // 1秒后自动关闭设置页面
+                    setTimeout(function() {
+                        closeSettings();
+                    }, 1000);
                 } catch (error) {
                     console.error('解析错误:', error);
-                    document.getElementById('status').textContent = '❌ 文件解析失败: ' + error.message;
+                    statusEl.textContent = '❌ 文件解析失败: ' + error.message;
+                    statusEl.style.color = '#ff6b6b';
                 }
             };
             
             reader.onerror = function() {
-                document.getElementById('status').textContent = '❌ 文件读取失败';
+                statusEl.textContent = '❌ 文件读取失败';
+                statusEl.style.color = '#ff6b6b';
             };
             
             reader.readAsText(file, 'UTF-8');
+        }
+        
+        // 保留原有的handleCSVUpload函数以兼容（如果其他地方有引用）
+        function handleCSVUpload(event) {
+            handleCSVUploadFromSettings(event);
         }
 
         function parseCSV(text) {
@@ -3521,7 +3455,6 @@ function bindSwipeToChart(chartType) {
 
         function createDailySummarySlide(dayData, dateObj, dayIndex, isToday) {
             var slideClass = isToday ? 'today-summary' : (dayIndex === 1 ? 'yesterday-summary' : 'older-summary');
-            var emoji = isToday ? '📅' : (dayIndex === 1 ? '📆' : '📋');
             
             // 确保所有数据字段都有默认值
             var milk = dayData.milk || 0;
@@ -3542,7 +3475,7 @@ function bindSwipeToChart(chartType) {
             var html = '<div class="daily-summary-slide">';
             html += '<div class="' + slideClass + '">';
             html += '<div class="summary-header">';
-            html += '<h2>' + emoji + ' ' + (dateObj.getMonth() + 1) + '/' + dateObj.getDate() + ' 汇总</h2>';
+            html += '<h2>' + (dateObj.getMonth() + 1) + '/' + dateObj.getDate() + ' 汇总</h2>';
             html += '</div>';
             html += '<div class="summary-content">';
             html += '<div class="today-grid">';
@@ -3615,7 +3548,7 @@ function bindSwipeToChart(chartType) {
             
             if (dates.length === 0) return;
             
-            // 准备最近7天的数据（包括没有数据的日期）
+            // 准备最近2周（14天）的数据
             // 时间轴从左到右：过去 → 现在（今天在最右边）
             dailySummaryData = [];
             var today = new Date();
@@ -3629,19 +3562,19 @@ function bindSwipeToChart(chartType) {
                 food: 0, poop: 0, weight: 0
             };
             
-            // 从6天前到今天，按时间顺序排列
-            for (var i = 6; i >= 0; i--) {
+            // 从13天前到今天，共14天
+            for (var i = 13; i >= 0; i--) {
                 var targetDate = new Date(today);
                 targetDate.setDate(targetDate.getDate() - i);
                 var dateKey = String(targetDate.getMonth() + 1).padStart(2, '0') + '-' + String(targetDate.getDate()).padStart(2, '0');
-                
                 var dayData = data[dateKey] || emptyDayData;
+                var isToday = i === 0;
                 
                 dailySummaryData.push({
                     date: targetDate,
                     dateKey: dateKey,
                     data: dayData,
-                    isToday: i === 0
+                    isToday: isToday
                 });
             }
             
@@ -3774,7 +3707,6 @@ function bindSwipeToChart(chartType) {
             console.log('Dates length:', dates.length);
 
             document.getElementById('dataContainer').style.display = 'block';
-            document.getElementById('fileContainer').style.display = 'none';
 
             // 渲染日汇总轮播
             renderDailySummaryCarousel(analyzed);
@@ -3807,28 +3739,10 @@ function bindSwipeToChart(chartType) {
             renderChart('feedInterval', 'day');
             renderChart('weight', 'day');
             renderChart('poop', 'day');
-
-            document.getElementById('status').textContent = '✅ 加载成功！共 ' + dates.length + ' 天数据';
             
             // 初始化触摸滑动支持
             initChartSwipe();
         }
-
-        document.getElementById('csvFile').addEventListener('change', function (e) {
-            var file = e.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function (ev) {
-                var csv = parseCSV(ev.target.result);
-                if (csv.length > 0) {
-                    allAnalyzedData = analyzeData(csv);
-                    renderCharts(allAnalyzedData);
-                }
-            };
-            reader.readAsText(file, 'UTF-8');
-        });
-
-        document.getElementById('birthDate').addEventListener('change', calculateAndDisplayAge);
 
         window.addEventListener('load', function () {
             initializeSettings();
@@ -3849,7 +3763,7 @@ function bindSwipeToChart(chartType) {
                     }
                 })
                 .catch(function () {
-                    document.getElementById('status').textContent = '等待上传CSV文件';
+                    console.log('未找到默认CSV文件，请通过设置上传');
                 });
         });
     </script>
@@ -3868,7 +3782,6 @@ function bindSwipeToChart(chartType) {
             var eventView = document.getElementById('eventView');
             var navItems = document.querySelectorAll('.nav-item');
             var babyAge = document.getElementById('babyAge');
-            var fileContainer = document.getElementById('fileContainer');
             
             if (viewName === 'event') {
                 analysisView.style.display = 'none';
@@ -3878,7 +3791,6 @@ function bindSwipeToChart(chartType) {
                 
                 // 添加事件视图标识class
                 document.body.classList.add('event-view-active');
-                if (fileContainer) fileContainer.style.display = 'none';
                 
                 // 初始化事件视图
                 initEventView();
@@ -3890,7 +3802,6 @@ function bindSwipeToChart(chartType) {
                 
                 // 移除事件视图标识class
                 document.body.classList.remove('event-view-active');
-                if (fileContainer) fileContainer.style.display = 'block';
             }
         }
 
