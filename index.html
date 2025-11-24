@@ -3452,6 +3452,9 @@ function bindSwipeToChart(chartType) {
         var currentSlideIndex = 0;
         var carouselTouchStartX = 0;
         var carouselTouchEndX = 0;
+        var carouselTouchStartY = 0;
+        var carouselIsScrolling = false;
+        var carouselSwipeInProgress = false;
 
         function createDailySummarySlide(dayData, dateObj, dayIndex, isToday) {
             var slideClass = isToday ? 'today-summary' : (dayIndex === 1 ? 'yesterday-summary' : 'older-summary');
@@ -3657,20 +3660,48 @@ function bindSwipeToChart(chartType) {
             if (!carousel) return;
             
             carousel.addEventListener('touchstart', function(e) {
+                if (carouselSwipeInProgress) return;
                 carouselTouchStartX = e.changedTouches[0].screenX;
+                carouselTouchStartY = e.changedTouches[0].screenY;
+                carouselIsScrolling = false;
+            }, { passive: true });
+            
+            carousel.addEventListener('touchmove', function(e) {
+                if (carouselSwipeInProgress) return;
+                if (!carouselIsScrolling) {
+                    var touchX = e.changedTouches[0].screenX;
+                    var touchY = e.changedTouches[0].screenY;
+                    var diffX = Math.abs(touchX - carouselTouchStartX);
+                    var diffY = Math.abs(touchY - carouselTouchStartY);
+                    
+                    // 判断是横向滑动还是纵向滚动
+                    if (diffX > diffY && diffX > 10) {
+                        carouselIsScrolling = false; // 横向滑动
+                    } else if (diffY > diffX) {
+                        carouselIsScrolling = true; // 纵向滚动
+                    }
+                }
             }, { passive: true });
             
             carousel.addEventListener('touchend', function(e) {
+                if (carouselSwipeInProgress || carouselIsScrolling) {
+                    carouselIsScrolling = false;
+                    return;
+                }
                 carouselTouchEndX = e.changedTouches[0].screenX;
                 handleCarouselSwipe();
             }, { passive: true });
         }
 
         function handleCarouselSwipe() {
+            if (carouselSwipeInProgress) return;
+            
             var swipeThreshold = 50;
             var diff = carouselTouchStartX - carouselTouchEndX;
             
             if (Math.abs(diff) > swipeThreshold) {
+                carouselSwipeInProgress = true;
+                
                 if (diff > 0) {
                     // 手指向左滑动（内容向左移），看更近的日期（向右移动到今天）
                     nextDailySummary();
@@ -3678,6 +3709,11 @@ function bindSwipeToChart(chartType) {
                     // 手指向右滑动（内容向右移），看更早的日期（向左移动到过去）
                     prevDailySummary();
                 }
+                
+                // 300ms后重置滑动状态，防止过快连续滑动
+                setTimeout(function() {
+                    carouselSwipeInProgress = false;
+                }, 300);
             }
         }
 
